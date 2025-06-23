@@ -116,15 +116,26 @@ const ChatPage = () => {
   };
 
   const handleFormSubmit = async (formData: Record<string, any>) => {
+    // Add form submission as a user message
+    const formSummary = Object.entries(formData)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join('\n');
+    
+    const formMessage: ChatMessage = {
+      id: Date.now().toString(),
+      content: `Form submitted:\n\n${formSummary}`,
+      role: 'user',
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, formMessage]);
+    
+    // Hide form and continue conversation
     setCurrentSchema(null);
     setIsWaitingForForm(false);
     
-    // Continue with the form data
-    const formSummary = Object.entries(formData)
-      .map(([key, value]) => `${key}: ${value}`)
-      .join(', ');
-    
-    await simulateStreamingResponse(`Form submitted with: ${formSummary}`, formData);
+    // Continue with AI response
+    await simulateStreamingResponse(`Continuing with form data: ${formSummary}`, formData);
   };
 
   return (
