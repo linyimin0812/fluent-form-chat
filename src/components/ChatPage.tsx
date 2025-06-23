@@ -13,6 +13,7 @@ const ChatPage = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentSchema, setCurrentSchema] = useState<FormSchema[] | null>(null);
   const [isWaitingForForm, setIsWaitingForForm] = useState(false);
+  const [submittedFormData, setSubmittedFormData] = useState<Record<string, any> | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -94,7 +95,17 @@ const ChatPage = () => {
         
         setCurrentSchema(mockSchema);
         setIsWaitingForForm(true);
+        setSubmittedFormData(null);
       }, 1000);
+    }
+
+    // If form was submitted, hide it after AI response
+    if (formData) {
+      setTimeout(() => {
+        setCurrentSchema(null);
+        setIsWaitingForForm(false);
+        setSubmittedFormData(null);
+      }, 2000);
     }
 
     setMessages(prev => prev.map(msg => 
@@ -116,6 +127,9 @@ const ChatPage = () => {
   };
 
   const handleFormSubmit = async (formData: Record<string, any>) => {
+    // Store submitted form data
+    setSubmittedFormData(formData);
+    
     // Add form submission as a user message
     const formSummary = Object.entries(formData)
       .map(([key, value]) => `${key}: ${value}`)
@@ -129,10 +143,6 @@ const ChatPage = () => {
     };
     
     setMessages(prev => [...prev, formMessage]);
-    
-    // Hide form and continue conversation
-    setCurrentSchema(null);
-    setIsWaitingForForm(false);
     
     // Continue with AI response
     await simulateStreamingResponse(`Continuing with form data: ${formSummary}`, formData);
@@ -171,6 +181,7 @@ const ChatPage = () => {
               schema={currentSchema} 
               onSubmit={handleFormSubmit}
               isLoading={isStreaming}
+              submittedData={submittedFormData}
             />
           </div>
         )}

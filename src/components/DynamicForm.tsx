@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,13 +11,29 @@ interface DynamicFormProps {
   schema: FormSchema[];
   onSubmit: (data: Record<string, any>) => void;
   isLoading?: boolean;
+  submittedData?: Record<string, any> | null;
 }
 
-const DynamicForm: React.FC<DynamicFormProps> = ({ schema, onSubmit, isLoading = false }) => {
+const DynamicForm: React.FC<DynamicFormProps> = ({ 
+  schema, 
+  onSubmit, 
+  isLoading = false,
+  submittedData = null 
+}) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const isSubmitted = !!submittedData;
+
+  // Initialize form data with submitted data if available
+  useEffect(() => {
+    if (submittedData) {
+      setFormData(submittedData);
+    }
+  }, [submittedData]);
 
   const handleFieldChange = (fieldName: string, value: any) => {
+    if (isSubmitted) return; // Prevent changes after submission
+    
     setFormData(prev => ({
       ...prev,
       [fieldName]: value
@@ -48,36 +64,39 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ schema, onSubmit, isLoading =
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (isSubmitted) return; // Prevent resubmission
+    
     if (validateForm()) {
       onSubmit(formData);
     }
   };
 
   const renderField = (field: FormSchema) => {
-    const commonProps = {
-      id: field.name,
-      value: formData[field.name] || '',
-      onChange: (value: any) => handleFieldChange(field.name, value)
-    };
+    const fieldValue = formData[field.name] || '';
+    const isDisabled = isSubmitted;
 
     switch (field.type) {
       case 'input':
         return (
           <Input
-            {...commonProps}
+            id={field.name}
+            value={fieldValue}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={`Enter ${field.label.toLowerCase()}`}
-            className={errors[field.name] ? 'border-red-500' : ''}
+            className={`${errors[field.name] ? 'border-red-500' : ''} ${isDisabled ? 'bg-gray-100 text-gray-600' : ''}`}
+            disabled={isDisabled}
+            readOnly={isDisabled}
           />
         );
       
       case 'select':
         return (
           <Select
-            value={formData[field.name] || ''}
+            value={fieldValue}
             onValueChange={(value) => handleFieldChange(field.name, value)}
+            disabled={isDisabled}
           >
-            <SelectTrigger className={errors[field.name] ? 'border-red-500' : ''}>
+            <SelectTrigger className={`${errors[field.name] ? 'border-red-500' : ''} ${isDisabled ? 'bg-gray-100 text-gray-600' : ''}`}>
               <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
             </SelectTrigger>
             <SelectContent>
@@ -93,9 +112,13 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ schema, onSubmit, isLoading =
       default:
         return (
           <Input
-            {...commonProps}
+            id={field.name}
+            value={fieldValue}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={`Enter ${field.label.toLowerCase()}`}
+            className={isDisabled ? 'bg-gray-100 text-gray-600' : ''}
+            disabled={isDisabled}
+            readOnly={isDisabled}
           />
         );
     }
@@ -105,10 +128,13 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ schema, onSubmit, isLoading =
     <Card className="w-full animate-fade-in">
       <CardHeader>
         <CardTitle className="text-lg font-medium">
-          Additional Information Required
+          {isSubmitted ? 'Form Submitted' : 'Additional Information Required'}
         </CardTitle>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Please provide the following information to continue:
+          {isSubmitted 
+            ? 'Thank you for providing the information. Processing your request...'
+            : 'Please provide the following information to continue:'
+          }
         </p>
       </CardHeader>
       <CardContent>
@@ -128,10 +154,10 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ schema, onSubmit, isLoading =
           <div className="flex justify-end pt-4">
             <Button 
               type="submit" 
-              disabled={isLoading}
-              className="min-w-[100px]"
+              disabled={isLoading || isSubmitted}
+              className={`min-w-[100px] ${isSubmitted ? 'bg-gray-400 cursor-not-allowed' : ''}`}
             >
-              {isLoading ? 'Submitting...' : 'Submit'}
+              {isSubmitted ? 'Submitted' : isLoading ? 'Submitting...' : 'Submit'}
             </Button>
           </div>
         </form>
