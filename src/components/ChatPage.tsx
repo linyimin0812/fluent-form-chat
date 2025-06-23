@@ -99,15 +99,6 @@ const ChatPage = () => {
       }, 1000);
     }
 
-    // If form was submitted, hide it after AI response
-    if (formData) {
-      setTimeout(() => {
-        setCurrentSchema(null);
-        setIsWaitingForForm(false);
-        setSubmittedFormData(null);
-      }, 2000);
-    }
-
     setMessages(prev => prev.map(msg => 
       msg.id === aiMessageId 
         ? { ...msg, isStreaming: false }
@@ -130,28 +121,57 @@ const ChatPage = () => {
     // Store submitted form data
     setSubmittedFormData(formData);
     
-    // Add form submission as a user message
-    const formSummary = Object.entries(formData)
-      .map(([key, value]) => `${key}: ${value}`)
-      .join('\n');
-    
-    const formMessage: ChatMessage = {
-      id: Date.now().toString(),
-      content: `Form submitted:\n\n${formSummary}`,
-      role: 'user',
-      timestamp: new Date()
-    };
-    
-    setMessages(prev => [...prev, formMessage]);
-    
-    // Continue with AI response
-    await simulateStreamingResponse(`Continuing with form data: ${formSummary}`, formData);
+    // Continue with AI response processing the form data
+    setTimeout(async () => {
+      // Create AI response message after processing form data
+      const aiMessageId = Date.now().toString();
+      const aiMessage: ChatMessage = {
+        id: aiMessageId,
+        content: '',
+        role: 'assistant',
+        timestamp: new Date(),
+        isStreaming: true
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+      setIsStreaming(true);
+
+      // Simulate AI processing the form data with streaming response
+      const formProcessingResponse = `Thank you for providing the additional information. Based on your preferences (${Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(', ')}), I can now provide you with a more tailored response. Let me analyze this information and give you the best recommendations.`;
+      
+      for (let i = 0; i <= formProcessingResponse.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, 30));
+        const currentText = formProcessingResponse.slice(0, i);
+        
+        setMessages(prev => prev.map(msg => 
+          msg.id === aiMessageId 
+            ? { ...msg, content: currentText }
+            : msg
+        ));
+      }
+
+      // Complete the streaming and hide the form
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, isStreaming: false }
+          : msg
+      ));
+      
+      setIsStreaming(false);
+      
+      // Hide form after AI processes the data
+      setTimeout(() => {
+        setCurrentSchema(null);
+        setIsWaitingForForm(false);
+        setSubmittedFormData(null);
+      }, 1000);
+    }, 1000);
   };
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex-shrink-0">
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
           AI Assistant Chat
         </h1>
@@ -161,7 +181,7 @@ const ChatPage = () => {
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
         {messages.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-500 dark:text-gray-400 mb-4">
@@ -189,8 +209,8 @@ const ChatPage = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Form */}
-      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+      {/* Fixed Input Form */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 z-10">
         <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto">
           <div className="flex gap-2">
             <Input
