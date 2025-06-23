@@ -150,7 +150,7 @@ const ChatPage = () => {
         ));
       }
 
-      // Complete the streaming and hide the form
+      // Complete the streaming - but DON'T hide the form
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId 
           ? { ...msg, isStreaming: false }
@@ -158,13 +158,7 @@ const ChatPage = () => {
       ));
       
       setIsStreaming(false);
-      
-      // Hide form after AI processes the data
-      setTimeout(() => {
-        setCurrentSchema(null);
-        setIsWaitingForForm(false);
-        setSubmittedFormData(null);
-      }, 1000);
+      setIsWaitingForForm(false); // Allow new messages while keeping form visible
     }, 1000);
   };
 
@@ -195,7 +189,7 @@ const ChatPage = () => {
           <MessageBubble key={message.id} message={message} />
         ))}
         
-        {currentSchema && isWaitingForForm && (
+        {currentSchema && (
           <div className="max-w-2xl mx-auto">
             <DynamicForm 
               schema={currentSchema} 
@@ -217,22 +211,17 @@ const ChatPage = () => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Type your message..."
-              disabled={isStreaming || isWaitingForForm}
+              disabled={isStreaming}
               className="flex-1"
             />
             <Button 
               type="submit" 
-              disabled={!inputValue.trim() || isStreaming || isWaitingForForm}
+              disabled={!inputValue.trim() || isStreaming}
               size="sm"
             >
               <Send className="h-4 w-4" />
             </Button>
           </div>
-          {isWaitingForForm && (
-            <p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
-              Please fill out the form above to continue the conversation.
-            </p>
-          )}
         </form>
       </div>
     </div>
