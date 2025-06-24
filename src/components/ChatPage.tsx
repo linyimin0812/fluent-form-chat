@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import MessageBubble from './MessageBubble';
 import DynamicForm from './DynamicForm';
 import { ChatMessage, FormSchema } from '@/types/chat';
+import { v4 as uuidv4 } from 'uuid';
+
 
 const mockSchema: FormSchema[] = [
   {
@@ -74,6 +76,28 @@ const mockBizTypeSchema: FormSchema[] = [
   }
 ];
 
+
+const mockPanelSchema: FormSchema[] = [
+  {
+    name: 'bizType',
+    label: 'bizType',
+    type: 'select',
+    values: ['cashback', 'shakewin', 'PriceLand'],
+  },
+  {
+    name: 'spreadType',
+    label: 'spreadType',
+    type: 'input',
+    values: [],
+  },
+  {
+    name: 'description',
+    label: 'description',
+    type: 'input',
+    values: [],
+  }
+];
+
 const ChatPage = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -96,7 +120,7 @@ const ChatPage = () => {
     
     // Add user message
     const newUserMessage: ChatMessage = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       content: userMessage,
       role: 'user',
       timestamp: new Date()
@@ -105,7 +129,7 @@ const ChatPage = () => {
     setMessages(prev => [...prev, newUserMessage]);
 
     // Create AI response message
-    const aiMessageId = (Date.now() + 1).toString();
+    const aiMessageId = uuidv4();
     const aiMessage: ChatMessage = {
       id: aiMessageId,
       content: '',
@@ -169,7 +193,7 @@ const ChatPage = () => {
     });
 
     setMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uuidv4(),
         content: Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(', '),
         role: 'user',
         timestamp: new Date(),
@@ -178,7 +202,7 @@ const ChatPage = () => {
     
     // Continue with AI response processing the form data
     // Create AI response message after processing form data
-    const aiMessageId = Date.now().toString();
+    const aiMessageId = uuidv4();
     const aiMessage: ChatMessage = {
       id: aiMessageId,
       content: '',
@@ -193,9 +217,14 @@ const ChatPage = () => {
     let formProcessingResponses: string[] = [`收到表单数据: ${Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(', ')}`];
 
     // bizType和spreadType配置
-    if (!formData || Object.keys(formData).includes('figmaUrl')) {
+    if (!formData && Object.keys(formData).includes('figmaUrl')) {
       formProcessingResponses.push('根据您提供的figma设计稿链接和合图模板文件内容，为您生成分享bizType和spreadType。');
       formProcessingResponses.push('bizType和spreadType是分享场景的唯一标识，用于区分不同的分享场景');
+    }
+
+    // panel创建
+    if (!formData &&  Object.keys(formData).includes('bizType')) {
+      formProcessingResponses.push('bizType和spreadType创建成功，开始为您创建面板配置');
     }
 
 
@@ -218,11 +247,26 @@ const ChatPage = () => {
     if (!formData || Object.keys(formData).includes('figmaUrl')) {
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId 
-          ? { ...msg, isStreaming: false, formSchema: mockBizTypeSchema }
+          ? { ...msg, formSchema: mockBizTypeSchema }
           : msg
       ));
     }
 
+
+    // panel创建
+    if (!formData &&  Object.keys(formData).includes('bizType')) {
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, formSchema: mockBizTypeSchema }
+          : msg
+      ));
+    }
+
+    setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, isStreaming: false }
+          : msg
+      ));
 
   };
 
