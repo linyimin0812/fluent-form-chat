@@ -88,7 +88,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                     >
                       {message.content}
                     </ReactMarkdown>
-                  </div>
+                </div>
               </div>
             )}
           </div>
