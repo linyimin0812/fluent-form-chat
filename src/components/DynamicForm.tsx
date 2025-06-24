@@ -343,7 +343,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     <Card className="w-full animate-fade-in">
       <CardHeader>
         <CardTitle className="text-lg font-medium">
-          {isSubmitted ? 'Form Submitted' : title}
+          {title}
         </CardTitle>
         <p className="text-sm text-gray-600 dark:text-gray-400">
           {isSubmitted 
