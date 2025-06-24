@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Upload, X } from 'lucide-react';
 import { FormSchema } from '@/types/chat';
 
 interface DynamicFormProps {
@@ -46,11 +47,41 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     }
   };
 
+  const handleFileChange = (fieldName: string, files: FileList | null) => {
+    if (isSubmitted || !files) return;
+    
+    const fileArray = Array.from(files);
+    const fileData = fileArray.map(file => ({
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      file: file
+    }));
+    
+    const field = schema.find(f => f.name === fieldName);
+    const value = field?.multiple ? fileData : fileData[0];
+    
+    handleFieldChange(fieldName, value);
+  };
+
+  const removeFile = (fieldName: string, index?: number) => {
+    if (isSubmitted) return;
+    
+    const currentValue = formData[fieldName];
+    if (Array.isArray(currentValue)) {
+      const newFiles = currentValue.filter((_, i) => i !== index);
+      handleFieldChange(fieldName, newFiles.length > 0 ? newFiles : null);
+    } else {
+      handleFieldChange(fieldName, null);
+    }
+  };
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
     schema.forEach(field => {
-      if (!formData[field.name] || formData[field.name].trim() === '') {
+      const value = formData[field.name];
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
         newErrors[field.name] = `${field.label} is required`;
       }
     });
@@ -65,8 +96,82 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     if (isSubmitted) return; // Prevent resubmission
     
     if (validateForm()) {
-      onSubmit(formData);
+      // Convert file objects to readable format for submission
+      const submissionData = { ...formData };
+      schema.forEach(field => {
+        if (field.type === 'file' && submissionData[field.name]) {
+          const value = submissionData[field.name];
+          if (Array.isArray(value)) {
+            submissionData[field.name] = value.map(f => f.name).join(', ');
+          } else {
+            submissionData[field.name] = value.name;
+          }
+        }
+      });
+      onSubmit(submissionData);
     }
+  };
+
+  const renderFileField = (field: FormSchema) => {
+    const fieldValue = formData[field.name];
+    const isDisabled = isSubmitted;
+    const files = Array.isArray(fieldValue) ? fieldValue : (fieldValue ? [fieldValue] : []);
+
+    return (
+      <div className="space-y-2">
+        <div className={`border-2 border-dashed rounded-lg p-4 text-center ${
+          isDisabled ? 'bg-gray-100 border-gray-300' : 'border-gray-300 hover:border-gray-400'
+        } ${errors[field.name] ? 'border-red-500' : ''}`}>
+          <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+          <p className="text-sm text-gray-600 mb-2">
+            {field.multiple ? 'Drop files here or click to browse' : 'Drop file here or click to browse'}
+          </p>
+          <Input
+            type="file"
+            accept={field.accept}
+            multiple={field.multiple}
+            onChange={(e) => handleFileChange(field.name, e.target.files)}
+            disabled={isDisabled}
+            className="hidden"
+            id={`file-${field.name}`}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isDisabled}
+            onClick={() => document.getElementById(`file-${field.name}`)?.click()}
+          >
+            Browse Files
+          </Button>
+        </div>
+        
+        {files.length > 0 && (
+          <div className="space-y-2">
+            {files.map((file, index) => (
+              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{file.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {(file.size / 1024).toFixed(1)} KB • {file.type}
+                  </p>
+                </div>
+                {!isDisabled && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeFile(field.name, field.multiple ? index : undefined)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   const renderField = (field: FormSchema) => {
@@ -106,6 +211,9 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             </SelectContent>
           </Select>
         );
+      
+      case 'file':
+        return renderFileField(field);
       
       default:
         return (

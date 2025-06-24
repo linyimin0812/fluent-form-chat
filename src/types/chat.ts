@@ -11,8 +11,10 @@ export interface ChatMessage {
 export interface FormSchema {
   name: string;
   label: string;
-  type: 'input' | 'select';
+  type: 'input' | 'select' | 'file';
   values: string[];
+  accept?: string; // For file inputs - specify accepted file types
+  multiple?: boolean; // For file inputs - allow multiple files
 }
 
 export interface DynamicForm {

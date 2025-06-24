@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,40 +26,20 @@ const mockSchema: FormSchema[] = [
     values: ['Low', 'Medium', 'High', 'Critical']
   },
   {
-    name: 'user_preference',
-    label: 'What is your preferred approach?',
-    type: 'select',
-    values: ['Conservative', 'Moderate', 'Aggressive']
+    name: 'supporting_documents',
+    label: 'Upload Supporting Documents',
+    type: 'file',
+    values: [],
+    accept: '.pdf,.doc,.docx,.txt',
+    multiple: true
   },
   {
-    name: 'additional_context',
-    label: 'Please provide additional context',
-    type: 'input',
-    values: []
-  },
-  {
-    name: 'priority_level',
-    label: 'Priority Level',
-    type: 'select',
-    values: ['Low', 'Medium', 'High', 'Critical']
-  },
-  {
-    name: 'user_preference',
-    label: 'What is your preferred approach?',
-    type: 'select',
-    values: ['Conservative', 'Moderate', 'Aggressive']
-  },
-  {
-    name: 'additional_context',
-    label: 'Please provide additional context',
-    type: 'input',
-    values: []
-  },
-  {
-    name: 'priority_level',
-    label: 'Priority Level',
-    type: 'select',
-    values: ['Low', 'Medium', 'High', 'Critical']
+    name: 'profile_image',
+    label: 'Profile Image',
+    type: 'file',
+    values: [],
+    accept: 'image/*',
+    multiple: false
   }
 ];
 
