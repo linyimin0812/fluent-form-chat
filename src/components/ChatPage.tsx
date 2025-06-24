@@ -8,53 +8,12 @@ import { ChatMessage, FormSchema } from '@/types/chat';
 import { v4 as uuidv4 } from 'uuid';
 
 
-const mockSchema: FormSchema[] = [
-  {
-    name: 'user_preference',
-    label: 'What is your preferred approach?',
-    type: 'radio',
-    values: ['Conservative', 'Moderate', 'Aggressive'],
-    defaultValue: 'Moderate',
-    description: 'Select your investment approach'
-  },
-  {
-    name: 'features',
-    label: 'Select desired features',
-    type: 'checkbox',
-    values: ['Analytics', 'Notifications', 'Dark Mode', 'Export'],
-    defaultValue: ['Analytics', 'Notifications']
-  },
-  {
-    name: 'enable_notifications',
-    label: 'Enable Notifications',
-    type: 'switch',
-    values: [],
-    defaultValue: true,
-    description: 'Turn on to receive email notifications'
-  },
-  {
-    name: 'additional_context',
-    label: 'Please provide additional context',
-    type: 'textarea',
-    values: [],
-    placeholder: 'Enter detailed information here...'
-  },
-  {
-    name: 'priority_level',
-    label: 'Priority Level',
-    type: 'toggle-group',
-    values: ['Low', 'Medium', 'High', 'Critical'],
-    defaultValue: 'Medium'
-  }
-];
-
-
 const mockCreateSchema: FormSchema[] = [
   {
     name: 'figmaUrl',
     label: 'figma设计稿链接',
     type: 'input',
-    values: []
+    values: [],
   },
   {
     name: 'templateFile101',
@@ -62,7 +21,8 @@ const mockCreateSchema: FormSchema[] = [
     type: 'file',
     values: [],
     accept: '.pdf,.doc,.docx,.txt,.psd',
-    multiple: false
+    multiple: false,
+    required: false
   },
   {
     name: 'templateFile169',
@@ -70,7 +30,8 @@ const mockCreateSchema: FormSchema[] = [
     type: 'file',
     values: [],
     accept: '.pdf,.doc,.docx,.txt,.psd',
-    multiple: false
+    multiple: false,
+    required: false
   }
 ];
 
@@ -80,18 +41,22 @@ const mockBizTypeSchema: FormSchema[] = [
     label: 'bizType',
     type: 'select',
     values: ['cashback', 'shakewin', 'prizeland'],
+    defaultValue: 'cashback'
   },
   {
     name: 'spreadType',
     label: 'spreadType',
     type: 'input',
     values: [],
+    defaultValue: 'default_spread_type'
   },
   {
     name: 'description',
-    label: 'description',
+    label: '场景描述',
     type: 'input',
     values: [],
+    required: false,
+    defaultValue: '组队PK，邀请好友一起参与活动，赢取奖励'
   }
 ];
 
@@ -99,94 +64,88 @@ const mockBizTypeSchema: FormSchema[] = [
 const mockPanelSchema: FormSchema[] = [
   {
     name: 'sharePanelTitle',
-    label: 'Share Panel Title',
+    label: '标题',
     type: 'input',
     values: [],
+    defaultValue: 'Team Up for Rewards!'
   },
   {
     name: 'sharePanelSubTitle',
-    label: 'Share Panel Subtitle',
+    label: '副标题',
     type: 'input',
     values: [],
+    defaultValue: '组队PK，邀请好友一起参与活动，赢取奖励'
   },
   {
     name: 'sharePanelTitleColor',
-    label: 'Share Panel Title Color',
+    label: '标题颜色',
     type: 'input',
     values: [],
+    defaultValue: '#000000'
   },
   {
     name: 'sharePanelTitleSubColor',
-    label: 'Share Panel Subtitle Color',
+    label: '副标题颜色',
     type: 'input',
     values: [],
+    defaultValue: '#666666'
   },
   {
     name: 'backgroundUrl',
-    label: 'Background Image URL',
+    label: '背景图片url',
     type: 'input',
     values: [],
+    defaultValue: 'https://example.com/default-background.jpg'
   },
   {
     name: 'activityNamePicUrl',
-    label: 'Activity Name Picture URL',
+    label: '活动名称图片url',
     type: 'input',
     values: [],
+    defaultValue: 'https://example.com/default-background.jpg'
   }
 ];
 
 const mockContentSchema: FormSchema[] = [
   {
     name: 'shareTitle',
-    label: 'Share Title',
+    label: '分享标题',
     type: 'input',
     values: [],
+    defaultValue: 'Team Up, Earn More'
   },
   {
     name: 'shareSubTitle',
-    label: 'Share Subtitle',
+    label: '分享副标题',
     type: 'input',
     values: [],
+    defaultValue: '邀请好友组队PK，赢取奖励'
   },
   {
     name: 'templateId101',
-    label: 'Template ID 1:1',
+    label: '模板ID（1:1）',
     type: 'input',
     values: [],
+    defaultValue: uuidv4()
   },
   {
     name: 'templateId169',
-    label: 'Template ID 16:9',
+    label: '模板ID（16:9）',
     type: 'input',
     values: [],
+    defaultValue: uuidv4()
   }
 ];
 
 
 const mockIsPreviewSchema: FormSchema[] = [
   {
-    name: '是否进行预览',
-    label: '动态文案 1',
-    type: 'input',
+    name: 'isPreview',
+    label: '是否进行预览',
+    type: 'switch',
     values: [],
-  },
-  {
-    name: 'dynamicContent2',
-    label: '动态文案 2',
-    type: 'input',
-    values: [],
-  },
-  {
-    name: 'dynamicImage1',
-    label: '动态图片 1',
-    type: 'input',
-    values: [],
-  },
-  {
-    name: 'dynamicImage2',
-    label: '动态图片 2',
-    type: 'input',
-    values: [],
+    defaultValue: false,
+    required: false,
   }
 ];
 
@@ -196,24 +155,28 @@ const mockPreviewSchema: FormSchema[] = [
     label: '动态文案 1',
     type: 'input',
     values: [],
+    defaultValue: '$ 1.00 Cashback for every friend you invite!'
   },
   {
     name: 'dynamicContent2',
     label: '动态文案 2',
     type: 'input',
     values: [],
+    defaultValue: 'Invite 5 friends to earn a $5 bonus!'
   },
   {
     name: 'dynamicImage1',
     label: '动态图片 1',
     type: 'input',
     values: [],
+    defaultValue: 'https://example.com/dynamic-image-1.jpg'
   },
   {
     name: 'dynamicImage2',
     label: '动态图片 2',
     type: 'input',
     values: [],
+    defaultValue: 'https://example.com/dynamic-image-1.jpg'
   }
 ];
 
@@ -263,10 +226,10 @@ const ChatPage = () => {
     if (/.*创建.*/.test(userMessage)) {
       responses = [
         `好的,开始为您创建分享配置。分为三步为您创建分享配置。
-          1. 首先创建bizType和spreadType
-          2. 然后创建面板配置
-          3. 最后创建分享内容配置
-        `,
+
+    1. 首先创建bizType和spreadType
+    2. 然后创建面板配置
+    3. 最后创建分享内容配置`,
         "分享配置创建需要您提供面板的figma设计稿链接和分享合图模板文件"
       ];
     }
@@ -314,7 +277,7 @@ const ChatPage = () => {
 
     setMessages(prev => [...prev, {
         id: uuidv4(),
-        content: Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(', '),
+        content: ['```json', JSON.stringify(formData, null, 2), '```'].join("\n"),
         role: 'user',
         timestamp: new Date(),
         isStreaming: false
@@ -323,7 +286,25 @@ const ChatPage = () => {
     // Continue with AI response processing the form data
     // Create AI response message after processing form data
     const aiMessageId = uuidv4();
-    const aiMessage: ChatMessage = {
+
+    let aiMessage: ChatMessage;
+
+    // 预览结果
+    if (formData &&  Object.keys(formData).includes('dynamicContent1')) {
+      aiMessage = {
+        id: aiMessageId,
+        content: '![](https://img.alicdn.com/imgextra/i1/O1CN017XkYty23oN8j2TcaO_!!6000000007302-2-tps-1484-1302.png)',
+        role: 'assistant',
+        timestamp: new Date(),
+        isStreaming: false
+      };
+      setMessages(prev => [...prev, aiMessage]);
+
+      return;
+
+    }
+
+    aiMessage = {
       id: aiMessageId,
       content: '',
       role: 'assistant',
@@ -334,7 +315,7 @@ const ChatPage = () => {
     setMessages(prev => [...prev, aiMessage]);
     setIsStreaming(true);
 
-    let formProcessingResponses: string[] = [`收到表单数据: ${Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(', ')}`];
+    let formProcessingResponses: string[] = [`收到表单数据: \n`, '```json', JSON.stringify(formData, null, 2), '```'];
 
     // bizType和spreadType配置
     if (formData && Object.keys(formData).includes('figmaUrl')) {
@@ -352,12 +333,17 @@ const ChatPage = () => {
       formProcessingResponses.push('面板配置生成成功，开始为您创建分享内容配置');
     }
 
-    // 预览
-    if (formData &&  Object.keys(formData).includes('tempalteId101')) {
+    // 是否预览
+    if (formData &&  Object.keys(formData).includes('templateId101')) {
       formProcessingResponses.push('分享内容配置生成成功，是否进行预览？');
     }
 
-    const formProcessingResponse = formProcessingResponses.join(' ');
+    // 预览
+    if (formData &&  Object.keys(formData).includes('isPreview')) {
+      formProcessingResponses.push('预览生成成功，以下是预览内容：');
+    }
+
+    const formProcessingResponse = formProcessingResponses.join('\n');
     
     for (let i = 0; i <= formProcessingResponse.length; i++) {
       await new Promise(resolve => setTimeout(resolve, 5));
@@ -399,11 +385,20 @@ const ChatPage = () => {
       ));
     }
 
-    // 预览
-    if (formData &&  Object.keys(formData).includes('tempalteId101')) {
+    // 是否预览
+    if (formData &&  Object.keys(formData).includes('templateId101')) {
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId 
-          ? { ...msg, formSchema: mockContentSchema, formTitle: '创建分享内容配置' }
+          ? { ...msg, formSchema: mockIsPreviewSchema, formTitle: '是否预览' }
+          : msg
+      ));
+    }
+
+    // 预览内容
+    if (formData &&  Object.keys(formData).includes('isPreview')) {
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, formSchema: mockPreviewSchema, formTitle: '预览内容' }
           : msg
       ));
     }
