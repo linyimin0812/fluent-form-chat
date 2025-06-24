@@ -6,6 +6,13 @@ import { ChatMessage } from '@/types/chat';
 import StreamingText from './StreamingText';
 import { Button } from '@/components/ui/button';
 
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+import 'highlight.js/styles/github.css';
+
+import json from 'highlight.js/lib/languages/json';
+
+
 interface MessageBubbleProps {
   message: ChatMessage;
 }
@@ -64,35 +71,24 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               <StreamingText text={message.content} />
             ) : (
               <div className="whitespace-pre-wrap break-words pr-8">
-                {isUser ? (
-                  message.content
-                ) : (
-                  <div className="prose prose-sm max-w-none dark:prose-invert prose-p:m-0 prose-p:leading-relaxed">
-                    <ReactMarkdown
+                <div className="prose prose-sm max-w-none dark:prose-invert prose-p:m-0 prose-p:leading-relaxed">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[[rehypeHighlight, { languages: { json } }]]}
                       components={{
-                        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                        ul: ({ children }) => <ul className="mb-2 last:mb-0 pl-4">{children}</ul>,
-                        ol: ({ children }) => <ol className="mb-2 last:mb-0 pl-4">{children}</ol>,
-                        li: ({ children }) => <li className="mb-1">{children}</li>,
-                        code: ({ children, className }) => {
-                          const isInline = !className;
-                          return isInline ? (
-                            <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm">
-                              {children}
-                            </code>
-                          ) : (
-                            <code className="block bg-gray-100 dark:bg-gray-800 p-2 rounded text-sm overflow-x-auto">
-                              {children}
-                            </code>
-                          );
-                        },
-                        pre: ({ children }) => <pre className="mb-2 last:mb-0">{children}</pre>,
+                        img: ({ src, alt }) => (
+                          <img
+                            src={src ?? ''}
+                            alt={alt ?? ''}
+                            className="my-2 rounded shadow"
+                            style={{ display: 'block', margin: '8px 0', maxWidth: '300px', height: 'auto' }} // 指定最大宽度
+                          />
+                        ),
                       }}
                     >
                       {message.content}
                     </ReactMarkdown>
                   </div>
-                )}
               </div>
             )}
           </div>
