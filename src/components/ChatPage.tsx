@@ -46,8 +46,16 @@ const mockCreateSchema: FormSchema[] = [
     values: []
   },
   {
-    name: 'templateFile',
-    label: '分享合图模板文件',
+    name: 'templateFile101',
+    label: '分享合图模板文件1:1',
+    type: 'file',
+    values: [],
+    accept: '.pdf,.doc,.docx,.txt,.psd',
+    multiple: false
+  },
+  {
+    name: 'templateFile169',
+    label: '分享合图模板文件16:9',
     type: 'file',
     values: [],
     accept: '.pdf,.doc,.docx,.txt,.psd',
@@ -60,7 +68,7 @@ const mockBizTypeSchema: FormSchema[] = [
     name: 'bizType',
     label: 'bizType',
     type: 'select',
-    values: ['cashback', 'shakewin', 'PriceLand'],
+    values: ['cashback', 'shakewin', 'prizeland'],
   },
   {
     name: 'spreadType',
@@ -79,24 +87,125 @@ const mockBizTypeSchema: FormSchema[] = [
 
 const mockPanelSchema: FormSchema[] = [
   {
-    name: 'bizType',
-    label: 'bizType',
-    type: 'select',
-    values: ['cashback', 'shakewin', 'PriceLand'],
-  },
-  {
-    name: 'spreadType',
-    label: 'spreadType',
+    name: 'sharePanelTitle',
+    label: 'Share Panel Title',
     type: 'input',
     values: [],
   },
   {
-    name: 'description',
-    label: 'description',
+    name: 'sharePanelSubTitle',
+    label: 'Share Panel Subtitle',
+    type: 'input',
+    values: [],
+  },
+  {
+    name: 'sharePanelTitleColor',
+    label: 'Share Panel Title Color',
+    type: 'input',
+    values: [],
+  },
+  {
+    name: 'sharePanelTitleSubColor',
+    label: 'Share Panel Subtitle Color',
+    type: 'input',
+    values: [],
+  },
+  {
+    name: 'backgroundUrl',
+    label: 'Background Image URL',
+    type: 'input',
+    values: [],
+  },
+  {
+    name: 'activityNamePicUrl',
+    label: 'Activity Name Picture URL',
     type: 'input',
     values: [],
   }
 ];
+
+const mockContentSchema: FormSchema[] = [
+  {
+    name: 'shareTitle',
+    label: 'Share Title',
+    type: 'input',
+    values: [],
+  },
+  {
+    name: 'shareSubTitle',
+    label: 'Share Subtitle',
+    type: 'input',
+    values: [],
+  },
+  {
+    name: 'templateId101',
+    label: 'Template ID 1:1',
+    type: 'input',
+    values: [],
+  },
+  {
+    name: 'templateId169',
+    label: 'Template ID 16:9',
+    type: 'input',
+    values: [],
+  }
+];
+
+
+const mockIsPreviewSchema: FormSchema[] = [
+  {
+    name: '是否进行预览',
+    label: '动态文案 1',
+    type: 'input',
+    values: [],
+  },
+  {
+    name: 'dynamicContent2',
+    label: '动态文案 2',
+    type: 'input',
+    values: [],
+  },
+  {
+    name: 'dynamicImage1',
+    label: '动态图片 1',
+    type: 'input',
+    values: [],
+  },
+  {
+    name: 'dynamicImage2',
+    label: '动态图片 2',
+    type: 'input',
+    values: [],
+  }
+];
+
+const mockPreviewSchema: FormSchema[] = [
+  {
+    name: 'dynamicContent1',
+    label: '动态文案 1',
+    type: 'input',
+    values: [],
+  },
+  {
+    name: 'dynamicContent2',
+    label: '动态文案 2',
+    type: 'input',
+    values: [],
+  },
+  {
+    name: 'dynamicImage1',
+    label: '动态图片 1',
+    type: 'input',
+    values: [],
+  },
+  {
+    name: 'dynamicImage2',
+    label: '动态图片 2',
+    type: 'input',
+    values: [],
+  }
+];
+
 
 const ChatPage = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -145,12 +254,16 @@ const ChatPage = () => {
 
     if (/.*创建.*/.test(userMessage)) {
       responses = [
-        "好的，开始为您创建分享配置，首先为您创建bizType和spreadType，然后创建面板配置，最后创建分享内容配置。",
+        `好的,开始为您创建分享配置。分为三步为您创建分享配置。
+          1. 首先创建bizType和spreadType
+          2. 然后创建面板配置
+          3. 最后创建分享内容配置
+        `,
         "分享配置创建需要您提供面板的figma设计稿链接和分享合图模板文件"
       ];
     }
     
-    const fullResponse = responses.join(' ');
+    const fullResponse = responses.join('\n');
     
     for (let i = 0; i <= fullResponse.length; i++) {
       await new Promise(resolve => setTimeout(resolve, 5));
@@ -217,15 +330,26 @@ const ChatPage = () => {
     let formProcessingResponses: string[] = [`收到表单数据: ${Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(', ')}`];
 
     // bizType和spreadType配置
-    if (!formData && Object.keys(formData).includes('figmaUrl')) {
+    if (formData && Object.keys(formData).includes('figmaUrl')) {
       formProcessingResponses.push('根据您提供的figma设计稿链接和合图模板文件内容，为您生成分享bizType和spreadType。');
       formProcessingResponses.push('bizType和spreadType是分享场景的唯一标识，用于区分不同的分享场景');
     }
 
     // panel创建
-    if (!formData &&  Object.keys(formData).includes('bizType')) {
+    if (formData &&  Object.keys(formData).includes('bizType')) {
       formProcessingResponses.push('bizType和spreadType创建成功，开始为您创建面板配置');
     }
+
+    // content创建
+    if (formData &&  Object.keys(formData).includes('sharePanelTitle')) {
+      formProcessingResponses.push('面板配置生成成功，开始为您创建分享内容配置');
+    }
+
+    // 预览
+    if (formData &&  Object.keys(formData).includes('tempalteId101')) {
+      formProcessingResponses.push('分享内容配置生成成功，是否进行预览？');
+    }
+
 
 
     const formProcessingResponse = formProcessingResponses.join(' ');
@@ -244,7 +368,7 @@ const ChatPage = () => {
     setIsStreaming(false);
 
     // bizType和spreadType配置完成后，渲染结果表单
-    if (!formData || Object.keys(formData).includes('figmaUrl')) {
+    if (formData && Object.keys(formData).includes('figmaUrl')) {
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId 
           ? { ...msg, formSchema: mockBizTypeSchema }
@@ -254,10 +378,28 @@ const ChatPage = () => {
 
 
     // panel创建
-    if (!formData &&  Object.keys(formData).includes('bizType')) {
+    if (formData && Object.keys(formData).includes('bizType')) {
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId 
-          ? { ...msg, formSchema: mockBizTypeSchema }
+          ? { ...msg, formSchema: mockPanelSchema }
+          : msg
+      ));
+    }
+
+    // content创建
+    if (formData && Object.keys(formData).includes('sharePanelTitle')) {
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, formSchema: mockContentSchema }
+          : msg
+      ));
+    }
+
+    // 预览
+    if (formData &&  Object.keys(formData).includes('tempalteId101')) {
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, formSchema: mockContentSchema }
           : msg
       ));
     }
