@@ -10,14 +10,12 @@ import { FormSchema } from '@/types/chat';
 interface DynamicFormProps {
   schema: FormSchema[];
   onSubmit: (data: Record<string, any>) => void;
-  isLoading?: boolean;
   submittedData?: Record<string, any> | null;
 }
 
 const DynamicForm: React.FC<DynamicFormProps> = ({ 
   schema, 
   onSubmit, 
-  isLoading = false,
   submittedData = null 
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
@@ -154,10 +152,10 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
           <div className="flex justify-end pt-4">
             <Button 
               type="submit" 
-              disabled={isLoading || isSubmitted}
+              disabled={isSubmitted}
               className={`min-w-[100px] ${isSubmitted ? 'bg-gray-400 cursor-not-allowed' : ''}`}
             >
-              {isSubmitted ? 'Submitted' : isLoading ? 'Submitting...' : 'Submit'}
+              {isSubmitted ? 'Submitted' : 'Submit'}
             </Button>
           </div>
         </form>
