@@ -32,14 +32,45 @@ const mockSchema: FormSchema[] = [
     values: [],
     accept: '.pdf,.doc,.docx,.txt',
     multiple: true
+  }
+];
+
+
+const mockCreateSchema: FormSchema[] = [
+  {
+    name: 'figmaUrl',
+    label: 'figma设计稿链接',
+    type: 'input',
+    values: []
   },
   {
-    name: 'profile_image',
-    label: 'Profile Image',
+    name: 'templateFile',
+    label: '分享合图模板文件',
     type: 'file',
     values: [],
-    accept: 'image/*',
+    accept: '.pdf,.doc,.docx,.txt,.psd',
     multiple: false
+  }
+];
+
+const mockBizTypeSchema: FormSchema[] = [
+  {
+    name: 'bizType',
+    label: 'bizType',
+    type: 'select',
+    values: ['cashback', 'shakewin', 'PriceLand'],
+  },
+  {
+    name: 'spreadType',
+    label: 'spreadType',
+    type: 'input',
+    values: [],
+  },
+  {
+    name: 'description',
+    label: 'description',
+    type: 'input',
+    values: [],
   }
 ];
 
@@ -59,6 +90,8 @@ const ChatPage = () => {
   }, [messages]);
 
   const simulateStreamingResponse = async (userMessage: string, formData?: Record<string, any>) => {
+
+
     setIsStreaming(true);
     
     // Add user message
@@ -83,11 +116,15 @@ const ChatPage = () => {
     
     setMessages(prev => [...prev, aiMessage]);
 
-    // Simulate streaming response
-    const responses = [
-      "I understand you'd like to discuss this topic. ",
-      "Please provide the following details so I can better assist you:"
-    ];
+
+    let responses = [];
+
+    if (/.*创建.*/.test(userMessage)) {
+      responses = [
+        "好的，开始为您创建分享配置，首先为您创建bizType和spreadType，然后创建面板配置，最后创建分享内容配置。",
+        "分享配置创建需要您提供面板的figma设计稿链接和分享合图模板文件"
+      ];
+    }
     
     const fullResponse = responses.join(' ');
     
@@ -102,12 +139,14 @@ const ChatPage = () => {
       ));
     }
 
-    setMessages(prev => prev.map(msg => 
-      msg.id === aiMessageId 
-        ? { ...msg, isStreaming: false, formSchema: mockSchema }
-        : msg
-    ));
-    
+    if (/.*创建.*/.test(userMessage)) {
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, isStreaming: false, formSchema: mockCreateSchema }
+          : msg
+      ));
+    }
+
     setIsStreaming(false);
   };
 
@@ -138,43 +177,53 @@ const ChatPage = () => {
     }]);
     
     // Continue with AI response processing the form data
-    setTimeout(async () => {
-      // Create AI response message after processing form data
-      const aiMessageId = Date.now().toString();
-      const aiMessage: ChatMessage = {
-        id: aiMessageId,
-        content: '',
-        role: 'assistant',
-        timestamp: new Date(),
-        isStreaming: true
-      };
-      
-      setMessages(prev => [...prev, aiMessage]);
-      setIsStreaming(true);
+    // Create AI response message after processing form data
+    const aiMessageId = Date.now().toString();
+    const aiMessage: ChatMessage = {
+      id: aiMessageId,
+      content: '',
+      role: 'assistant',
+      timestamp: new Date(),
+      isStreaming: true
+    };
+    
+    setMessages(prev => [...prev, aiMessage]);
+    setIsStreaming(true);
 
-      // Simulate AI processing the form data with streaming response
-      const formProcessingResponse = `Thank you for providing the additional information. Based on your preferences (${Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(', ')}), I can now provide you with a more tailored response. Let me analyze this information and give you the best recommendations.`;
-      
-      for (let i = 0; i <= formProcessingResponse.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, 5));
-        const currentText = formProcessingResponse.slice(0, i);
-        
-        setMessages(prev => prev.map(msg => 
-          msg.id === aiMessageId 
-            ? { ...msg, content: currentText }
-            : msg
-        ));
-      }
+    let formProcessingResponses: string[] = [`收到表单数据: ${Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(', ')}`];
 
-      // Complete the streaming - but DON'T hide the form
+    // bizType和spreadType配置
+    if (!formData || Object.keys(formData).includes('figmaUrl')) {
+      formProcessingResponses.push('根据您提供的figma设计稿链接和合图模板文件内容，为您生成分享bizType和spreadType。');
+      formProcessingResponses.push('bizType和spreadType是分享场景的唯一标识，用于区分不同的分享场景');
+    }
+
+
+    const formProcessingResponse = formProcessingResponses.join(' ');
+    
+    for (let i = 0; i <= formProcessingResponse.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 5));
+      const currentText = formProcessingResponse.slice(0, i);
+      
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId 
-          ? { ...msg, isStreaming: false }
+          ? { ...msg, content: currentText }
           : msg
       ));
-      
-      setIsStreaming(false);
-    }, 1000);
+    }
+    
+    setIsStreaming(false);
+
+    // bizType和spreadType配置完成后，渲染结果表单
+    if (!formData || Object.keys(formData).includes('figmaUrl')) {
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, isStreaming: false, formSchema: mockBizTypeSchema }
+          : msg
+      ));
+    }
+
+
   };
 
   return (
@@ -182,10 +231,10 @@ const ChatPage = () => {
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex-shrink-0 sticky top-0 z-20">
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-          AI Assistant Chat
+          Share Agent
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Interact with our advanced language model
+          Create a share configuration by conversation
         </p>
       </div>
 
@@ -195,8 +244,8 @@ const ChatPage = () => {
           {messages.length === 0 && (
             <div className="text-center py-12">
               <div className="text-gray-500 dark:text-gray-400 mb-4">
-                <h2 className="text-lg font-medium mb-2">Welcome to AI Chat</h2>
-                <p>Start a conversation by typing your message below.</p>
+                <h2 className="text-lg font-medium mb-2">Welcome to Share Agent</h2>
+                <p>Create a share configuration by typing your requirements below.</p>
               </div>
             </div>
           )}
