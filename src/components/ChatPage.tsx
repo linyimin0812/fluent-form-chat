@@ -12,28 +12,39 @@ const mockSchema: FormSchema[] = [
   {
     name: 'user_preference',
     label: 'What is your preferred approach?',
-    type: 'select',
-    values: ['Conservative', 'Moderate', 'Aggressive']
+    type: 'radio',
+    values: ['Conservative', 'Moderate', 'Aggressive'],
+    defaultValue: 'Moderate',
+    description: 'Select your investment approach'
+  },
+  {
+    name: 'features',
+    label: 'Select desired features',
+    type: 'checkbox',
+    values: ['Analytics', 'Notifications', 'Dark Mode', 'Export'],
+    defaultValue: ['Analytics', 'Notifications']
+  },
+  {
+    name: 'enable_notifications',
+    label: 'Enable Notifications',
+    type: 'switch',
+    values: [],
+    defaultValue: true,
+    description: 'Turn on to receive email notifications'
   },
   {
     name: 'additional_context',
     label: 'Please provide additional context',
-    type: 'input',
-    values: []
+    type: 'textarea',
+    values: [],
+    placeholder: 'Enter detailed information here...'
   },
   {
     name: 'priority_level',
     label: 'Priority Level',
-    type: 'select',
-    values: ['Low', 'Medium', 'High', 'Critical']
-  },
-  {
-    name: 'supporting_documents',
-    label: 'Upload Supporting Documents',
-    type: 'file',
-    values: [],
-    accept: '.pdf,.doc,.docx,.txt',
-    multiple: true
+    type: 'toggle-group',
+    values: ['Low', 'Medium', 'High', 'Critical'],
+    defaultValue: 'Medium'
   }
 ];
 
@@ -223,8 +234,6 @@ const ChatPage = () => {
   }, [messages]);
 
   const simulateStreamingResponse = async (userMessage: string, formData?: Record<string, any>) => {
-
-
     setIsStreaming(true);
     
     // Add user message
@@ -248,7 +257,6 @@ const ChatPage = () => {
     };
     
     setMessages(prev => [...prev, aiMessage]);
-
 
     let responses = [];
 
@@ -279,7 +287,7 @@ const ChatPage = () => {
     if (/.*创建.*/.test(userMessage)) {
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId 
-          ? { ...msg, isStreaming: false, formSchema: mockCreateSchema }
+          ? { ...msg, isStreaming: false, formSchema: mockCreateSchema, formTitle: '创建分享配置 - 第一步' }
           : msg
       ));
     }
@@ -297,7 +305,6 @@ const ChatPage = () => {
   };
 
   const handleFormSubmit = async (id: string, formData: Record<string, any>) => {
-
     setSubmittedDynamicFormData(prev => {
       return {
         ...prev,
@@ -350,8 +357,6 @@ const ChatPage = () => {
       formProcessingResponses.push('分享内容配置生成成功，是否进行预览？');
     }
 
-
-
     const formProcessingResponse = formProcessingResponses.join(' ');
     
     for (let i = 0; i <= formProcessingResponse.length; i++) {
@@ -371,17 +376,16 @@ const ChatPage = () => {
     if (formData && Object.keys(formData).includes('figmaUrl')) {
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId 
-          ? { ...msg, formSchema: mockBizTypeSchema }
+          ? { ...msg, formSchema: mockBizTypeSchema, formTitle: '创建分享配置 - 第二步' }
           : msg
       ));
     }
-
 
     // panel创建
     if (formData && Object.keys(formData).includes('bizType')) {
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId 
-          ? { ...msg, formSchema: mockPanelSchema }
+          ? { ...msg, formSchema: mockPanelSchema, formTitle: '创建面板配置' }
           : msg
       ));
     }
@@ -390,7 +394,7 @@ const ChatPage = () => {
     if (formData && Object.keys(formData).includes('sharePanelTitle')) {
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId 
-          ? { ...msg, formSchema: mockContentSchema }
+          ? { ...msg, formSchema: mockContentSchema, formTitle: '创建分享内容配置' }
           : msg
       ));
     }
@@ -399,7 +403,7 @@ const ChatPage = () => {
     if (formData &&  Object.keys(formData).includes('tempalteId101')) {
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId 
-          ? { ...msg, formSchema: mockContentSchema }
+          ? { ...msg, formSchema: mockContentSchema, formTitle: '创建分享内容配置' }
           : msg
       ));
     }
@@ -445,6 +449,7 @@ const ChatPage = () => {
                     schema={message.formSchema} 
                     onSubmit={(data: Record<string, any>) => handleFormSubmit(message.id, data)}
                     submittedData={submittedDynamicFormData ? submittedDynamicFormData[message.id] : null}
+                    title={message.formTitle}
                   />
                 </div>
               )}

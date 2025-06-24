@@ -5,6 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Textarea } from '@/components/ui/textarea';
 import { Upload, X } from 'lucide-react';
 import { FormSchema } from '@/types/chat';
 
@@ -12,23 +17,37 @@ interface DynamicFormProps {
   schema: FormSchema[];
   onSubmit: (data: Record<string, any>) => void;
   submittedData?: Record<string, any> | null;
+  title?: string; // Dynamic title prop
 }
 
 const DynamicForm: React.FC<DynamicFormProps> = ({ 
   schema, 
   onSubmit, 
-  submittedData = null 
+  submittedData = null,
+  title = 'Additional Information Required'
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const isSubmitted = !!submittedData;
 
-  // Initialize form data with submitted data if available
+  // Initialize form data with default values and submitted data
   useEffect(() => {
+    const initialData: Record<string, any> = {};
+    
+    // Set default values from schema
+    schema.forEach(field => {
+      if (field.defaultValue !== undefined) {
+        initialData[field.name] = field.defaultValue;
+      }
+    });
+    
+    // Override with submitted data if available
     if (submittedData) {
-      setFormData(submittedData);
+      Object.assign(initialData, submittedData);
     }
-  }, [submittedData]);
+    
+    setFormData(initialData);
+  }, [schema, submittedData]);
 
   const handleFieldChange = (fieldName: string, value: any) => {
     if (isSubmitted) return; // Prevent changes after submission
@@ -80,9 +99,11 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     const newErrors: Record<string, string> = {};
     
     schema.forEach(field => {
-      const value = formData[field.name];
-      if (!value || (typeof value === 'string' && value.trim() === '')) {
-        newErrors[field.name] = `${field.label} is required`;
+      if (field.required !== false) { // Default to required unless explicitly set to false
+        const value = formData[field.name];
+        if (!value || (typeof value === 'string' && value.trim() === '')) {
+          newErrors[field.name] = `${field.label} is required`;
+        }
       }
     });
     
@@ -185,7 +206,20 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             id={field.name}
             value={fieldValue}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            placeholder={`Enter ${field.label.toLowerCase()}`}
+            placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
+            className={`${errors[field.name] ? 'border-red-500' : ''} ${isDisabled ? 'bg-gray-100 text-gray-600' : ''}`}
+            disabled={isDisabled}
+            readOnly={isDisabled}
+          />
+        );
+
+      case 'textarea':
+        return (
+          <Textarea
+            id={field.name}
+            value={fieldValue}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
             className={`${errors[field.name] ? 'border-red-500' : ''} ${isDisabled ? 'bg-gray-100 text-gray-600' : ''}`}
             disabled={isDisabled}
             readOnly={isDisabled}
@@ -200,7 +234,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             disabled={isDisabled}
           >
             <SelectTrigger className={`${errors[field.name] ? 'border-red-500' : ''} ${isDisabled ? 'bg-gray-100 text-gray-600' : ''}`}>
-              <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
+              <SelectValue placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`} />
             </SelectTrigger>
             <SelectContent>
               {field.values.map((option, index) => (
@@ -210,6 +244,81 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
               ))}
             </SelectContent>
           </Select>
+        );
+
+      case 'radio':
+        return (
+          <RadioGroup
+            value={fieldValue}
+            onValueChange={(value) => handleFieldChange(field.name, value)}
+            disabled={isDisabled}
+            className={`${errors[field.name] ? 'border border-red-500 rounded p-2' : ''}`}
+          >
+            {field.values.map((option, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <RadioGroupItem value={option} id={`${field.name}-${index}`} />
+                <Label htmlFor={`${field.name}-${index}`}>{option}</Label>
+              </div>
+            ))}
+          </RadioGroup>
+        );
+
+      case 'checkbox':
+        return (
+          <div className={`space-y-2 ${errors[field.name] ? 'border border-red-500 rounded p-2' : ''}`}>
+            {field.values.map((option, index) => {
+              const isChecked = Array.isArray(fieldValue) ? fieldValue.includes(option) : false;
+              return (
+                <div key={index} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`${field.name}-${index}`}
+                    checked={isChecked}
+                    onCheckedChange={(checked) => {
+                      if (isDisabled) return;
+                      const currentValues = Array.isArray(fieldValue) ? fieldValue : [];
+                      if (checked) {
+                        handleFieldChange(field.name, [...currentValues, option]);
+                      } else {
+                        handleFieldChange(field.name, currentValues.filter(v => v !== option));
+                      }
+                    }}
+                    disabled={isDisabled}
+                  />
+                  <Label htmlFor={`${field.name}-${index}`}>{option}</Label>
+                </div>
+              );
+            })}
+          </div>
+        );
+
+      case 'switch':
+        return (
+          <div className="flex items-center space-x-2">
+            <Switch
+              id={field.name}
+              checked={fieldValue || false}
+              onCheckedChange={(checked) => handleFieldChange(field.name, checked)}
+              disabled={isDisabled}
+            />
+            <Label htmlFor={field.name}>{fieldValue ? 'On' : 'Off'}</Label>
+          </div>
+        );
+
+      case 'toggle-group':
+        return (
+          <ToggleGroup
+            type={field.multiple ? 'multiple' : 'single'}
+            value={fieldValue}
+            onValueChange={(value) => handleFieldChange(field.name, value)}
+            disabled={isDisabled}
+            className={`${errors[field.name] ? 'border border-red-500 rounded p-2' : ''}`}
+          >
+            {field.values.map((option, index) => (
+              <ToggleGroupItem key={index} value={option}>
+                {option}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
         );
       
       case 'file':
@@ -221,7 +330,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             id={field.name}
             value={fieldValue}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            placeholder={`Enter ${field.label.toLowerCase()}`}
+            placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
             className={isDisabled ? 'bg-gray-100 text-gray-600' : ''}
             disabled={isDisabled}
             readOnly={isDisabled}
@@ -234,7 +343,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     <Card className="w-full animate-fade-in">
       <CardHeader>
         <CardTitle className="text-lg font-medium">
-          {isSubmitted ? 'Form Submitted' : 'Additional Information Required'}
+          {isSubmitted ? 'Form Submitted' : title}
         </CardTitle>
         <p className="text-sm text-gray-600 dark:text-gray-400">
           {isSubmitted 
@@ -249,7 +358,11 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             <div key={index} className="space-y-2">
               <Label htmlFor={field.name} className="text-sm font-medium">
                 {field.label}
+                {field.required !== false && <span className="text-red-500 ml-1">*</span>}
               </Label>
+              {field.description && (
+                <p className="text-xs text-gray-500">{field.description}</p>
+              )}
               {renderField(field)}
               {errors[field.name] && (
                 <p className="text-sm text-red-500">{errors[field.name]}</p>
