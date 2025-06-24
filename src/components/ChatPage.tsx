@@ -53,7 +53,7 @@ const mockBizTypeSchema: FormSchema[] = [
   {
     name: 'description',
     label: '场景描述',
-    type: 'input',
+    type: 'textarea',
     values: [],
     required: false,
     defaultValue: '组队PK，邀请好友一起参与活动，赢取奖励'
@@ -225,11 +225,12 @@ const ChatPage = () => {
 
     if (/.*创建.*/.test(userMessage)) {
       responses = [
-        `好的,开始为您创建分享配置。分为三步为您创建分享配置。
-
-    1. 首先创建bizType和spreadType
-    2. 然后创建面板配置
-    3. 最后创建分享内容配置`,
+        '好的,开始为您创建分享配置。分为三步为您创建分享配置。',
+        '```markdown',
+        '1. 首先创建bizType和spreadType',
+        '2. 然后创建面板配置',
+        '3. 最后创建分享内容配置',
+        '```',
         "分享配置创建需要您提供面板的figma设计稿链接和分享合图模板文件"
       ];
     }
