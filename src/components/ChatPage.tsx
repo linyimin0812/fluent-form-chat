@@ -7,13 +7,68 @@ import MessageBubble from './MessageBubble';
 import DynamicForm from './DynamicForm';
 import { ChatMessage, FormSchema } from '@/types/chat';
 
+const mockSchema: FormSchema[] = [
+  {
+    name: 'user_preference',
+    label: 'What is your preferred approach?',
+    type: 'select',
+    values: ['Conservative', 'Moderate', 'Aggressive']
+  },
+  {
+    name: 'additional_context',
+    label: 'Please provide additional context',
+    type: 'input',
+    values: []
+  },
+  {
+    name: 'priority_level',
+    label: 'Priority Level',
+    type: 'select',
+    values: ['Low', 'Medium', 'High', 'Critical']
+  },
+  {
+    name: 'user_preference',
+    label: 'What is your preferred approach?',
+    type: 'select',
+    values: ['Conservative', 'Moderate', 'Aggressive']
+  },
+  {
+    name: 'additional_context',
+    label: 'Please provide additional context',
+    type: 'input',
+    values: []
+  },
+  {
+    name: 'priority_level',
+    label: 'Priority Level',
+    type: 'select',
+    values: ['Low', 'Medium', 'High', 'Critical']
+  },
+  {
+    name: 'user_preference',
+    label: 'What is your preferred approach?',
+    type: 'select',
+    values: ['Conservative', 'Moderate', 'Aggressive']
+  },
+  {
+    name: 'additional_context',
+    label: 'Please provide additional context',
+    type: 'input',
+    values: []
+  },
+  {
+    name: 'priority_level',
+    label: 'Priority Level',
+    type: 'select',
+    values: ['Low', 'Medium', 'High', 'Critical']
+  }
+];
+
 const ChatPage = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [currentSchema, setCurrentSchema] = useState<FormSchema[] | null>(null);
-  const [isWaitingForForm, setIsWaitingForForm] = useState(false);
-  const [submittedFormData, setSubmittedFormData] = useState<Record<string, any> | null>(null);
+  const [submittedDynamicFormData, setSubmittedDynamicFormData] = useState<Record<string, Record<string, any>> | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -51,15 +106,14 @@ const ChatPage = () => {
 
     // Simulate streaming response
     const responses = [
-      "I understand you'd like to discuss this topic. Let me provide you with a comprehensive response.",
-      "Based on your query, I need some additional information to give you the most accurate answer.",
+      "I understand you'd like to discuss this topic. ",
       "Please provide the following details so I can better assist you:"
     ];
     
     const fullResponse = responses.join(' ');
     
     for (let i = 0; i <= fullResponse.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 30));
+      await new Promise(resolve => setTimeout(resolve, 5));
       const currentText = fullResponse.slice(0, i);
       
       setMessages(prev => prev.map(msg => 
@@ -69,39 +123,9 @@ const ChatPage = () => {
       ));
     }
 
-    // Simulate server returning schema (randomly for demo)
-    if (Math.random() > 0.3 && !formData) {
-      setTimeout(() => {
-        const mockSchema: FormSchema[] = [
-          {
-            name: 'user_preference',
-            label: 'What is your preferred approach?',
-            type: 'select',
-            values: ['Conservative', 'Moderate', 'Aggressive']
-          },
-          {
-            name: 'additional_context',
-            label: 'Please provide additional context',
-            type: 'input',
-            values: []
-          },
-          {
-            name: 'priority_level',
-            label: 'Priority Level',
-            type: 'select',
-            values: ['Low', 'Medium', 'High', 'Critical']
-          }
-        ];
-        
-        setCurrentSchema(mockSchema);
-        setIsWaitingForForm(true);
-        setSubmittedFormData(null);
-      }, 1000);
-    }
-
     setMessages(prev => prev.map(msg => 
       msg.id === aiMessageId 
-        ? { ...msg, isStreaming: false }
+        ? { ...msg, isStreaming: false, formSchema: mockSchema }
         : msg
     ));
     
@@ -117,9 +141,22 @@ const ChatPage = () => {
     await simulateStreamingResponse(message);
   };
 
-  const handleFormSubmit = async (formData: Record<string, any>) => {
-    // Store submitted form data
-    setSubmittedFormData(formData);
+  const handleFormSubmit = async (id: string, formData: Record<string, any>) => {
+
+    setSubmittedDynamicFormData(prev => {
+      return {
+        ...prev,
+        [id]: formData
+      };
+    });
+
+    setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        content: Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(', '),
+        role: 'user',
+        timestamp: new Date(),
+        isStreaming: false
+    }]);
     
     // Continue with AI response processing the form data
     setTimeout(async () => {
@@ -140,7 +177,7 @@ const ChatPage = () => {
       const formProcessingResponse = `Thank you for providing the additional information. Based on your preferences (${Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(', ')}), I can now provide you with a more tailored response. Let me analyze this information and give you the best recommendations.`;
       
       for (let i = 0; i <= formProcessingResponse.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, 30));
+        await new Promise(resolve => setTimeout(resolve, 5));
         const currentText = formProcessingResponse.slice(0, i);
         
         setMessages(prev => prev.map(msg => 
@@ -158,14 +195,13 @@ const ChatPage = () => {
       ));
       
       setIsStreaming(false);
-      setIsWaitingForForm(false); // Allow new messages while keeping form visible
     }, 1000);
   };
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex-shrink-0">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex-shrink-0 sticky top-0">
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
           AI Assistant Chat
         </h1>
@@ -186,19 +222,20 @@ const ChatPage = () => {
         )}
         
         {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
-        ))}
-        
-        {currentSchema && (
-          <div className="max-w-2xl mx-auto">
-            <DynamicForm 
-              schema={currentSchema} 
-              onSubmit={handleFormSubmit}
-              isLoading={isStreaming}
-              submittedData={submittedFormData}
-            />
+          <div>
+            <MessageBubble key={message.id} message={message} />
+            {message.formSchema && (
+              <div className="max-w-2xl mx-auto">
+                <DynamicForm 
+                  schema={message.formSchema} 
+                  onSubmit={(data: Record<string, any>) => handleFormSubmit(message.id, data)}
+                  submittedData={submittedDynamicFormData ? submittedDynamicFormData[message.id] : null}
+                />
+              </div>
+            )}
           </div>
-        )}
+          
+        ))}
         
         <div ref={messagesEndRef} />
       </div>
