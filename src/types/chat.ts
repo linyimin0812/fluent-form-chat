@@ -5,6 +5,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   timestamp: Date;
   isStreaming?: boolean;
+  formSchema?: FormSchema[]
 }
 
 export interface FormSchema {
@@ -12,4 +13,8 @@ export interface FormSchema {
   label: string;
   type: 'input' | 'select';
   values: string[];
+}
+
+export interface DynamicForm {
+  
 }
