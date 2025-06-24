@@ -1,7 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { Copy, Check } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { ChatMessage } from '@/types/chat';
 import StreamingText from './StreamingText';
+import { Button } from '@/components/ui/button';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -9,7 +12,18 @@ interface MessageBubbleProps {
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const isUser = message.role === 'user';
+  const [copied, setCopied] = useState(false);
   
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy message:', err);
+    }
+  };
+
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       <div className={`max-w-[80%] lg:max-w-[70%] ${isUser ? 'order-2' : 'order-1'}`}>
@@ -27,17 +41,57 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           
           {/* Message Content */}
           <div className={`
-            px-4 py-3 rounded-lg max-w-full
+            px-4 py-3 rounded-lg max-w-full relative group
             ${isUser 
               ? 'bg-blue-500 text-white rounded-br-sm' 
               : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-bl-sm'
             }
           `}>
+            {/* Copy Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopy}
+              className={`
+                absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0
+                ${isUser ? 'text-white hover:bg-blue-600' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'}
+              `}
+            >
+              {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+            </Button>
+
             {message.isStreaming ? (
               <StreamingText text={message.content} />
             ) : (
-              <div className="whitespace-pre-wrap break-words">
-                {message.content}
+              <div className="whitespace-pre-wrap break-words pr-8">
+                {isUser ? (
+                  message.content
+                ) : (
+                  <ReactMarkdown
+                    className="prose prose-sm max-w-none dark:prose-invert prose-p:m-0 prose-p:leading-relaxed"
+                    components={{
+                      p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                      ul: ({ children }) => <ul className="mb-2 last:mb-0 pl-4">{children}</ul>,
+                      ol: ({ children }) => <ol className="mb-2 last:mb-0 pl-4">{children}</ol>,
+                      li: ({ children }) => <li className="mb-1">{children}</li>,
+                      code: ({ children, className }) => {
+                        const isInline = !className;
+                        return isInline ? (
+                          <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm">
+                            {children}
+                          </code>
+                        ) : (
+                          <code className="block bg-gray-100 dark:bg-gray-800 p-2 rounded text-sm overflow-x-auto">
+                            {children}
+                          </code>
+                        );
+                      },
+                      pre: ({ children }) => <pre className="mb-2 last:mb-0">{children}</pre>,
+                    }}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
+                )}
               </div>
             )}
           </div>

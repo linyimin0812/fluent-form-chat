@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -201,7 +200,7 @@ const ChatPage = () => {
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex-shrink-0 sticky top-0">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex-shrink-0 sticky top-0 z-20">
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
           AI Assistant Chat
         </h1>
@@ -211,33 +210,34 @@ const ChatPage = () => {
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
-        {messages.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-500 dark:text-gray-400 mb-4">
-              <h2 className="text-lg font-medium mb-2">Welcome to AI Chat</h2>
-              <p>Start a conversation by typing your message below.</p>
-            </div>
-          </div>
-        )}
-        
-        {messages.map((message) => (
-          <div>
-            <MessageBubble key={message.id} message={message} />
-            {message.formSchema && (
-              <div className="max-w-2xl mx-auto">
-                <DynamicForm 
-                  schema={message.formSchema} 
-                  onSubmit={(data: Record<string, any>) => handleFormSubmit(message.id, data)}
-                  submittedData={submittedDynamicFormData ? submittedDynamicFormData[message.id] : null}
-                />
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-4 pb-24">
+          {messages.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-gray-500 dark:text-gray-400 mb-4">
+                <h2 className="text-lg font-medium mb-2">Welcome to AI Chat</h2>
+                <p>Start a conversation by typing your message below.</p>
               </div>
-            )}
-          </div>
+            </div>
+          )}
           
-        ))}
-        
-        <div ref={messagesEndRef} />
+          {messages.map((message) => (
+            <div key={message.id}>
+              <MessageBubble message={message} />
+              {message.formSchema && (
+                <div className="max-w-2xl mx-auto mb-4">
+                  <DynamicForm 
+                    schema={message.formSchema} 
+                    onSubmit={(data: Record<string, any>) => handleFormSubmit(message.id, data)}
+                    submittedData={submittedDynamicFormData ? submittedDynamicFormData[message.id] : null}
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+          
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* Fixed Input Form */}
