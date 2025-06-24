@@ -67,30 +67,31 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                 {isUser ? (
                   message.content
                 ) : (
-                  <ReactMarkdown
-                    className="prose prose-sm max-w-none dark:prose-invert prose-p:m-0 prose-p:leading-relaxed"
-                    components={{
-                      p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                      ul: ({ children }) => <ul className="mb-2 last:mb-0 pl-4">{children}</ul>,
-                      ol: ({ children }) => <ol className="mb-2 last:mb-0 pl-4">{children}</ol>,
-                      li: ({ children }) => <li className="mb-1">{children}</li>,
-                      code: ({ children, className }) => {
-                        const isInline = !className;
-                        return isInline ? (
-                          <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm">
-                            {children}
-                          </code>
-                        ) : (
-                          <code className="block bg-gray-100 dark:bg-gray-800 p-2 rounded text-sm overflow-x-auto">
-                            {children}
-                          </code>
-                        );
-                      },
-                      pre: ({ children }) => <pre className="mb-2 last:mb-0">{children}</pre>,
-                    }}
-                  >
-                    {message.content}
-                  </ReactMarkdown>
+                  <div className="prose prose-sm max-w-none dark:prose-invert prose-p:m-0 prose-p:leading-relaxed">
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                        ul: ({ children }) => <ul className="mb-2 last:mb-0 pl-4">{children}</ul>,
+                        ol: ({ children }) => <ol className="mb-2 last:mb-0 pl-4">{children}</ol>,
+                        li: ({ children }) => <li className="mb-1">{children}</li>,
+                        code: ({ children, className }) => {
+                          const isInline = !className;
+                          return isInline ? (
+                            <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm">
+                              {children}
+                            </code>
+                          ) : (
+                            <code className="block bg-gray-100 dark:bg-gray-800 p-2 rounded text-sm overflow-x-auto">
+                              {children}
+                            </code>
+                          );
+                        },
+                        pre: ({ children }) => <pre className="mb-2 last:mb-0">{children}</pre>,
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
                 )}
               </div>
             )}
