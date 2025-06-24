@@ -210,9 +210,9 @@ const ChatPage = () => {
         </p>
       </div>
 
-      {/* Messages Container - Updated to handle long forms better */}
-      <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="p-4 space-y-4 min-h-full pb-32">
+      {/* Messages Container - Fixed to prevent blank sections with long forms */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-4 pb-40">
           {messages.length === 0 && (
             <div className="text-center py-12">
               <div className="text-gray-500 dark:text-gray-400 mb-4">
