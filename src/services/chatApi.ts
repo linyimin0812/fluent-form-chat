@@ -1,3 +1,4 @@
+import { ChatMessage, FormSchema } from "@/types/chat";
 
 export interface ChatApiMessage {
   role: 'user' | 'assistant';
@@ -5,39 +6,25 @@ export interface ChatApiMessage {
 }
 
 export interface ChatApiRequest {
-  messages: ChatApiMessage[];
-  model?: string;
-  temperature?: number;
-  max_tokens?: number;
+  message: ChatApiMessage;
 }
 
 export interface ChatApiResponse {
-  message: string;
+  message: ChatMessage;
   error?: string;
 }
 
 export class ChatApiService {
-  private baseUrl: string;
-  private apiKey: string;
 
-  constructor(baseUrl: string = '/api/chat', apiKey: string = '') {
-    this.baseUrl = baseUrl;
-    this.apiKey = apiKey;
-  }
-
-  async sendMessage(messages: ChatApiMessage[]): Promise<ChatApiResponse> {
+  async chat(agent: string, conversation: string, message: ChatApiMessage): Promise<ChatApiResponse> {
     try {
-      const response = await fetch(this.baseUrl, {
+      const response = await fetch(`http://127.0.0.1:8089/flux`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(this.apiKey && { 'Authorization': `Bearer ${this.apiKey}` }),
         },
         body: JSON.stringify({
-          messages,
-          model: 'gpt-3.5-turbo',
-          temperature: 0.7,
-          max_tokens: 1000,
+          message
         }),
       });
 
@@ -47,34 +34,31 @@ export class ChatApiService {
 
       const data = await response.json();
       return {
-        message: data.message || data.choices?.[0]?.message?.content || 'No response received',
+        message: data,
       };
     } catch (error) {
       console.error('Chat API error:', error);
       return {
-        message: '',
+        message: null,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
       };
     }
   }
 
-  async streamMessage(
-    messages: ChatApiMessage[], 
+  async stream(
+    agent: string,
+    conversation: string,
+    message: ChatApiMessage, 
     onChunk: (chunk: string) => void
   ): Promise<ChatApiResponse> {
     try {
-      const response = await fetch(this.baseUrl, {
+      const response = await fetch(`http://127.0.0.1:8089/flux`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(this.apiKey && { 'Authorization': `Bearer ${this.apiKey}` }),
         },
         body: JSON.stringify({
-          messages,
-          model: 'gpt-3.5-turbo',
-          temperature: 0.7,
-          max_tokens: 1000,
-          stream: true,
+          message,
         }),
       });
 
@@ -83,53 +67,79 @@ export class ChatApiService {
       }
 
       const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullMessage = '';
+      
+      if (!reader) {
+        throw new Error('Response body is not readable');
+      }
 
-      if (reader) {
-        while (true) {
+      const decoder = new TextDecoder();
+
+      let fullMessage: ChatMessage = {
+        id: '',
+        content: '',
+        role: 'assistant',
+        timestamp: new Date(),
+        isStreaming: true,
+      };
+
+      let hasFormSchema: boolean = false;
+      let formSchemaContent: string = '';
+
+      while (true) {
+
           const { done, value } = await reader.read();
-          if (done) break;
+
+          if (done && !value) {
+            break;
+          }
 
           const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
+
+          console.log('Received chunk:', chunk);
+
+          const chunkMessage = JSON.parse(chunk) as ChatMessage;
+
+          fullMessage.id = chunkMessage.id || fullMessage.id;
+          fullMessage.role = chunkMessage.role || fullMessage.role;
+          fullMessage.timestamp = chunkMessage.timestamp || fullMessage.timestamp;
+
+          const lines: string[] = chunkMessage.content.split('\n');
 
           for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
 
-              try {
-                const parsed = JSON.parse(data);
-                const content = parsed.choices?.[0]?.delta?.content || '';
-                if (content) {
-                  fullMessage += content;
-                  onChunk(content);
-                }
-              } catch (e) {
-                // Skip invalid JSON lines
-              }
+            if (hasFormSchema) {
+              formSchemaContent += line.trim() !== '</dynamic_form_schema>' ? line : '';
+              continue;
             }
+
+            if (line.trim() === '<dynamic_form_schema>') {
+              hasFormSchema = true;
+              continue;
+            }
+
+            fullMessage.content += line + '\n';
+
           }
+
+          chunkMessage.content = fullMessage.content.trim();
+
+          onChunk(JSON.stringify(chunkMessage));
+
         }
-      }
+
+        fullMessage.isStreaming = false;
+        fullMessage.timestamp = new Date(fullMessage.timestamp || Date.now());
+        fullMessage.content = fullMessage.content.trim();
+        fullMessage.formSchema = hasFormSchema ? JSON.parse(formSchemaContent) as FormSchema[] : [];
 
       return { message: fullMessage };
     } catch (error) {
       console.error('Chat API streaming error:', error);
       return {
-        message: '',
+        message: {} as ChatMessage,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
       };
     }
-  }
-
-  setApiKey(apiKey: string) {
-    this.apiKey = apiKey;
-  }
-
-  setBaseUrl(baseUrl: string) {
-    this.baseUrl = baseUrl;
   }
 }
 
