@@ -10,33 +10,6 @@ import { chatApiService, ChatApiMessage } from '@/services/chatApi';
 import { v4 as uuidv4 } from 'uuid';
 import { SidebarTrigger } from './ui/sidebar';
 
-const mockCreateSchema: FormSchema[] = [
-  {
-    name: 'figmaUrl',
-    label: 'figma设计稿链接',
-    type: 'input',
-    values: [],
-  },
-  {
-    name: 'templateFile101',
-    label: '分享合图模板文件1:1',
-    type: 'file',
-    values: [],
-    accept: '.pdf,.doc,.docx,.txt,.psd',
-    multiple: false,
-    required: false
-  },
-  {
-    name: 'templateFile169',
-    label: '分享合图模板文件16:9',
-    type: 'file',
-    values: [],
-    accept: '.pdf,.doc,.docx,.txt,.psd',
-    multiple: false,
-    required: false
-  }
-];
-
 const mockBizTypeSchema: FormSchema[] = [
   {
     name: 'bizType',
@@ -273,74 +246,6 @@ const ChatPage = () => {
           timestamp: new Date()
         }
         updateMessages([...updatedMessages, {...aiMessage}]);
-    }
-
-    setIsStreaming(false);
-  };
-
-  const simulateStreamingResponse = async (userMessage: string, formData?: Record<string, any>) => {
-    if (!currentConversation) return;
-    
-    setIsStreaming(true);
-    
-    // Add user message
-    const newUserMessage: ChatMessage = {
-      id: uuidv4(),
-      content: userMessage,
-      role: 'user',
-      timestamp: new Date()
-    };
-    
-    const updatedMessages = [...messages, newUserMessage];
-    updateMessages(updatedMessages);
-
-    // Create AI response message
-    const aiMessageId = uuidv4();
-    const aiMessage: ChatMessage = {
-      id: aiMessageId,
-      content: '',
-      role: 'assistant',
-      timestamp: new Date(),
-      isStreaming: true
-    };
-    
-    const messagesWithAI = [...updatedMessages, aiMessage];
-    updateMessages(messagesWithAI);
-
-    let responses = [];
-
-    if (/.*创建.*/.test(userMessage)) {
-      responses = [
-        '好的,开始为您创建分享配置。分为三步为您创建分享配置。',
-        '```markdown',
-        '1. 首先创建bizType和spreadType',
-        '2. 然后创建面板配置',
-        '3. 最后创建分享内容配置',
-        '```',
-        "分享配置创建需要您提供面板的figma设计稿链接和分享合图模板文件"
-      ];
-    }
-    
-    const fullResponse = responses.join('\n');
-    
-    for (let i = 0; i <= fullResponse.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 5));
-      const currentText = fullResponse.slice(0, i);
-
-      aiMessage.content = currentText;
-      
-      const currentMessages = [...updatedMessages, {...aiMessage}];
-      updateMessages(currentMessages);
-    }
-
-    if (/.*创建.*/.test(userMessage)) {
-      const finalMessages = [...updatedMessages, { 
-        ...aiMessage, 
-        isStreaming: false, 
-        formSchema: mockCreateSchema, 
-        formTitle: '创建分享配置 - 第一步' 
-      }];
-      updateMessages(finalMessages);
     }
 
     setIsStreaming(false);
