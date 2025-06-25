@@ -52,124 +52,151 @@ export const ConversationSidebar = () => {
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    
+    if (diffInHours < 24) {
+      return new Intl.DateTimeFormat('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    } else if (diffInHours < 24 * 7) {
+      return new Intl.DateTimeFormat('en-US', {
+        weekday: 'short'
+      }).format(date);
+    } else {
+      return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric'
+      }).format(date);
+    }
   };
 
   return (
-    <Sidebar>
-      <SidebarHeader className="p-4">
+    <Sidebar className="border-r">
+      <SidebarHeader className="p-4 border-b">
         <Button 
           onClick={handleCreateConversation}
-          className="w-full justify-start gap-2"
+          className="w-full justify-start gap-2 bg-primary hover:bg-primary/90"
           size="sm"
         >
           <Plus className="h-4 w-4" />
-          New Conversation
+          New Chat
         </Button>
       </SidebarHeader>
       
-      <SidebarContent>
+      <SidebarContent className="p-2">
         <SidebarGroup>
-          <SidebarGroupLabel>Conversations</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-2 py-2 text-xs font-medium text-muted-foreground">
+            Recent Conversations
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {conversations.map((conversation) => (
-                <div key={conversation.id}>
-                  <SidebarMenuItem>
-                    <div className="group flex items-center w-full hover:opacity-100">
-                      <SidebarMenuButton
-                        asChild
-                        isActive={currentConversationId === conversation.id}
-                        className="flex-1"
+                <SidebarMenuItem key={conversation.id} className="group">
+                  <div className="relative">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={currentConversationId === conversation.id}
+                      className={`
+                        w-full h-auto p-3 rounded-lg transition-all duration-200
+                        ${currentConversationId === conversation.id 
+                          ? 'bg-accent text-accent-foreground shadow-sm' 
+                          : 'hover:bg-accent/50'
+                        }
+                      `}
+                    >
+                      <button
+                        onClick={() => switchConversation(conversation.id)}
+                        className="w-full text-left"
                       >
-                        <button
-                          onClick={() => switchConversation(conversation.id)}
-                          className="w-full"
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                          <div className="flex flex-col items-start min-w-0 flex-1">
+                        <div className="flex items-start gap-3">
+                          <MessageSquare className="h-4 w-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                          <div className="flex-1 min-w-0">
                             {editingId === conversation.id ? (
-                              <div className="flex items-center gap-1 w-full" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                 <Input
                                   value={editingName}
                                   onChange={(e) => setEditingName(e.target.value)}
-                                  className="h-6 text-sm"
+                                  className="h-7 text-sm flex-1"
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleSaveEdit();
                                     if (e.key === 'Escape') handleCancelEdit();
                                   }}
                                   autoFocus
                                 />
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 w-6 p-0"
-                                  onClick={handleSaveEdit}
-                                >
-                                  <Check className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 w-6 p-0"
-                                  onClick={handleCancelEdit}
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 w-7 p-0 hover:bg-green-100"
+                                    onClick={handleSaveEdit}
+                                  >
+                                    <Check className="h-3 w-3 text-green-600" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 w-7 p-0 hover:bg-red-100"
+                                    onClick={handleCancelEdit}
+                                  >
+                                    <X className="h-3 w-3 text-red-600" />
+                                  </Button>
+                                </div>
                               </div>
                             ) : (
                               <>
-                                <span className="truncate text-sm font-medium">
+                                <div className="font-medium text-sm leading-5 truncate">
                                   {conversation.name}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  {formatDate(conversation.lastUpdated)}
-                                </span>
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {conversation.messages.length} messages • {formatDate(conversation.lastUpdated)}
+                                </div>
                               </>
                             )}
                           </div>
-                        </button>
-                      </SidebarMenuButton>
-                      
-                      {editingId !== conversation.id && (
-                        <div className="opacity-0 hover:opacity-100 flex items-center gap-1 transition-opacity">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleStartEdit(conversation.id, conversation.name);
-                            }}
-                          >
-                            <Edit2 className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteConversation(conversation.id);
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
                         </div>
-                      )}
-                    </div>
-                  </SidebarMenuItem>
-                  <div className="border-t border-gray-200 dark:border-gray-700 my-1 mx-2" />
-
-                </div>
+                      </button>
+                    </SidebarMenuButton>
+                    
+                    {editingId !== conversation.id && (
+                      <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 hover:bg-blue-100"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartEdit(conversation.id, conversation.name);
+                          }}
+                        >
+                          <Edit2 className="h-3 w-3 text-blue-600" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 hover:bg-red-100"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteConversation(conversation.id);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3 text-red-600" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </SidebarMenuItem>
               ))}
+              
+              {conversations.length === 0 && (
+                <div className="px-3 py-8 text-center text-sm text-muted-foreground">
+                  No conversations yet.
+                  <br />
+                  Click "New Chat" to start.
+                </div>
+              )}
             </SidebarMenu>
-            
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
