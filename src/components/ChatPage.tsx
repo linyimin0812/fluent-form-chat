@@ -7,6 +7,7 @@ import DynamicForm from './DynamicForm';
 import { ChatMessage, FormSchema } from '@/types/chat';
 import { useConversation } from '@/contexts/ConversationContext';
 import { v4 as uuidv4 } from 'uuid';
+import { SidebarTrigger } from './ui/sidebar';
 
 
 const mockCreateSchema: FormSchema[] = [
@@ -265,8 +266,10 @@ const ChatPage = () => {
     for (let i = 0; i <= fullResponse.length; i++) {
       await new Promise(resolve => setTimeout(resolve, 5));
       const currentText = fullResponse.slice(0, i);
+
+      aiMessage.content = currentText;
       
-      const currentMessages = [...updatedMessages, { ...aiMessage, content: currentText }];
+      const currentMessages = [...updatedMessages, {...aiMessage}];
       updateMessages(currentMessages);
     }
 
@@ -293,7 +296,11 @@ const ChatPage = () => {
   };
 
   const handleFormSubmit = async (id: string, formData: Record<string, any>) => {
+
     if (!currentConversation) return;
+
+    // disable input while streaming
+    setIsStreaming(true);
     
     setSubmittedDynamicFormData(prev => {
       return {
@@ -342,7 +349,6 @@ const ChatPage = () => {
     
     const messagesWithAI = [...updatedMessages, aiMessage];
     updateMessages(messagesWithAI);
-    setIsStreaming(true);
 
     let formProcessingResponses: string[] = [`收到表单数据: \n`, '```json', JSON.stringify(formData, null, 2), '```'];
 
@@ -377,68 +383,83 @@ const ChatPage = () => {
     for (let i = 0; i <= formProcessingResponse.length; i++) {
       await new Promise(resolve => setTimeout(resolve, 5));
       const currentText = formProcessingResponse.slice(0, i);
+
+      aiMessage.content = currentText;
       
-      const currentMessages = [...updatedMessages, { ...aiMessage, content: currentText }];
+      const currentMessages = [...updatedMessages, aiMessage];
       updateMessages(currentMessages);
     }
-    
+
+    aiMessage.isStreaming = false;
+
     setIsStreaming(false);
 
     // Update all the form schema assignments to use updateMessages
     if (formData && Object.keys(formData).includes('figmaUrl')) {
+
+      aiMessage.formSchema = mockBizTypeSchema;
+      aiMessage.formTitle = '创建分享配置 - 第二步';
+
       const finalMessages = [...updatedMessages, { 
         ...aiMessage, 
-        formSchema: mockBizTypeSchema, 
-        formTitle: '创建分享配置 - 第二步' 
       }];
       updateMessages(finalMessages);
     }
 
     // panel创建
     if (formData && Object.keys(formData).includes('bizType')) {
+
+      aiMessage.formSchema = mockPanelSchema;
+      aiMessage.formTitle = '创建面板配置';
+
       const finalMessages = [...updatedMessages, { 
         ...aiMessage, 
-        formSchema: mockPanelSchema, 
-        formTitle: '创建面板配置' 
       }];
       updateMessages(finalMessages);
     }
 
     // content创建
     if (formData && Object.keys(formData).includes('sharePanelTitle')) {
+
+      aiMessage.formSchema = mockContentSchema;
+      aiMessage.formTitle = '创建分享内容配置';
+
       const finalMessages = [...updatedMessages, { 
         ...aiMessage, 
-        formSchema: mockContentSchema, 
-        formTitle: '创建分享内容配置' 
       }];
       updateMessages(finalMessages);
     }
 
     // 是否预览
     if (formData &&  Object.keys(formData).includes('templateId101')) {
+
+      aiMessage.formSchema = mockIsPreviewSchema;
+      aiMessage.formTitle = '是否预览';
+
       const finalMessages = [...updatedMessages, { 
         ...aiMessage, 
-        formSchema: mockIsPreviewSchema, 
-        formTitle: '是否预览' 
       }];
       updateMessages(finalMessages);
     }
 
     // 预览内容
     if (formData &&  Object.keys(formData).includes('isPreview')) {
+
+      aiMessage.formSchema = mockPreviewSchema;
+      aiMessage.formTitle = '预览内容';
+
+
       const finalMessages = [...updatedMessages, { 
-        ...aiMessage, 
-        formSchema: mockPreviewSchema, 
-        formTitle: '预览内容' 
+        ...aiMessage
       }];
       updateMessages(finalMessages);
     }
 
-    setMessages(prev => prev.map(msg => 
-        msg.id === aiMessageId 
-          ? { ...msg, isStreaming: false }
-          : msg
-      ));
+    const finalMessages = [...updatedMessages, { 
+        ...aiMessage, 
+    }];
+    
+    updateMessages(finalMessages);
 
   };
 
@@ -456,13 +477,16 @@ const ChatPage = () => {
   return (
     <div className="flex flex-col bg-gray-50 dark:bg-gray-900 h-full">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex-shrink-0">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-          {currentConversation.name}
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Create a share configuration by conversation
-        </p>
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex-shrink-0 sticky top-0 z-20 flex">
+        <SidebarTrigger className="mr-2 cursor-pointer" />
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
+            {currentConversation.name}
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Create a share configuration by conversation
+          </p>
+        </div>
       </div>
 
       {/* Messages Container */}
@@ -498,7 +522,7 @@ const ChatPage = () => {
       </div>
 
       {/* Fixed Input Form */}
-      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
         <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto">
           <div className="flex gap-2">
             <Input
