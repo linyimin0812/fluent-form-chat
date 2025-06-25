@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, MessageSquare, Trash2, Edit2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel 
+  SidebarGroupLabel, 
 } from '@/components/ui/sidebar';
 import { useConversation } from '@/contexts/ConversationContext';
 
