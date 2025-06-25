@@ -1,9 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Settings } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import MessageBubble from './MessageBubble';
 import DynamicForm from './DynamicForm';
 import { ChatMessage, FormSchema } from '@/types/chat';
@@ -195,9 +193,6 @@ const ChatPage = () => {
   const [inputValue, setInputValue] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [submittedDynamicFormData, setSubmittedDynamicFormData] = useState<Record<string, Record<string, any>> | null>(null);
-  const [apiKey, setApiKey] = useState('');
-  const [apiUrl, setApiUrl] = useState('/api/chat');
-  const [showSettings, setShowSettings] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Initialize first conversation if none exists
@@ -221,18 +216,10 @@ const ChatPage = () => {
     if (currentConversation) {
       updateConversationMessages(currentConversation.id, newMessages);
     }
-  };
-
-  const convertToApiMessages = (messages: ChatMessage[]): ChatApiMessage[] => {
-    return messages
-      .filter(msg => !msg.isStreaming && msg.content.trim())
-      .map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }));
-  };
+  }; 
 
   const handleApiResponse = async (userMessage: string) => {
+
     if (!currentConversation) return;
     
     setIsStreaming(true);
@@ -248,44 +235,44 @@ const ChatPage = () => {
     const updatedMessages = [...messages, newUserMessage];
     updateMessages(updatedMessages);
 
-    // Create AI response message
-    const aiMessageId = uuidv4();
-    const aiMessage: ChatMessage = {
-      id: aiMessageId,
-      content: '',
-      role: 'assistant',
-      timestamp: new Date(),
-      isStreaming: true
-    };
-    
-    const messagesWithAI = [...updatedMessages, aiMessage];
-    updateMessages(messagesWithAI);
-
-    // Prepare API messages (exclude the streaming message)
-    const apiMessages = convertToApiMessages(updatedMessages);
+    const chatApiMessage: ChatApiMessage = {
+        role: newUserMessage.role,
+        content: newUserMessage.content
+    }
 
     try {
       // Use streaming for real-time response
-      const response = await chatApiService.streamMessage(apiMessages, (chunk: string) => {
-        aiMessage.content += chunk;
-        const currentMessages = [...updatedMessages, {...aiMessage}];
-        updateMessages(currentMessages);
+      const response = await chatApiService.stream('agent', currentConversation.id, chatApiMessage, (chunk: string) => {
+        
+        const aiMessage = JSON.parse(chunk) as ChatMessage;
+
+        aiMessage.timestamp = new Date(aiMessage.timestamp || Date.now());
+
+        updateMessages([...updatedMessages, {...aiMessage}]);
       });
 
       if (response.error) {
-        aiMessage.content = `Error: ${response.error}`;
+        const aiMessage: ChatMessage = {
+          id: uuidv4(),
+          content: `Error: ${response.error}`,
+          role: 'assistant',
+          timestamp: new Date()
+        }
+        updateMessages([...updatedMessages, {...aiMessage}]);
       }
 
       // Mark as complete
-      aiMessage.isStreaming = false;
-      const finalMessages = [...updatedMessages, aiMessage];
-      updateMessages(finalMessages);
+      updateMessages([...updatedMessages, {...response.message}]);
 
     } catch (error) {
-      aiMessage.content = `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`;
-      aiMessage.isStreaming = false;
-      const finalMessages = [...updatedMessages, aiMessage];
-      updateMessages(finalMessages);
+
+      const aiMessage: ChatMessage = {
+          id: uuidv4(),
+          content: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
+          role: 'assistant',
+          timestamp: new Date()
+        }
+        updateMessages([...updatedMessages, {...aiMessage}]);
     }
 
     setIsStreaming(false);
@@ -365,7 +352,9 @@ const ChatPage = () => {
 
     const message = inputValue;
     setInputValue('');
-    await simulateStreamingResponse(message);
+    // await simulateStreamingResponse(message);
+
+    await handleApiResponse(message);
   };
 
   const handleFormSubmit = async (id: string, formData: Record<string, any>) => {
@@ -536,12 +525,6 @@ const ChatPage = () => {
 
   };
 
-  const handleSettingsSave = () => {
-    chatApiService.setApiKey(apiKey);
-    chatApiService.setBaseUrl(apiUrl);
-    setShowSettings(false);
-  };
-
   if (!currentConversation) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -566,42 +549,6 @@ const ChatPage = () => {
             Create a share configuration by conversation
           </p>
         </div>
-        <Dialog open={showSettings} onOpenChange={setShowSettings}>
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>API Settings</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="apiUrl">API URL</Label>
-                <Input
-                  id="apiUrl"
-                  value={apiUrl}
-                  onChange={(e) => setApiUrl(e.target.value)}
-                  placeholder="/api/chat"
-                />
-              </div>
-              <div>
-                <Label htmlFor="apiKey">API Key (optional)</Label>
-                <Input
-                  id="apiKey"
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Enter your API key"
-                />
-              </div>
-              <Button onClick={handleSettingsSave} className="w-full">
-                Save Settings
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {/* Messages Container */}
@@ -612,7 +559,6 @@ const ChatPage = () => {
               <div className="text-gray-500 dark:text-gray-400 mb-4">
                 <h2 className="text-lg font-medium mb-2">Welcome to Share Agent</h2>
                 <p>Create a share configuration by typing your requirements below.</p>
-                <p className="text-sm mt-2">Configure API settings using the settings button in the header.</p>
               </div>
             </div>
           )}
