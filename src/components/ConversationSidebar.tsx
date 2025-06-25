@@ -81,7 +81,7 @@ export const ConversationSidebar = () => {
               {conversations.map((conversation) => (
                 <div key={conversation.id}>
                   <SidebarMenuItem>
-                    <div className="group flex items-center w-full">
+                    <div className="group flex items-center w-full hover:opacity-100">
                       <SidebarMenuButton
                         asChild
                         isActive={currentConversationId === conversation.id}
@@ -137,7 +137,7 @@ export const ConversationSidebar = () => {
                       </SidebarMenuButton>
                       
                       {editingId !== conversation.id && (
-                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
+                        <div className="opacity-0 hover:opacity-100 flex items-center gap-1 transition-opacity">
                           <Button
                             size="sm"
                             variant="ghost"
