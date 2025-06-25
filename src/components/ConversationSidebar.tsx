@@ -79,8 +79,8 @@ export const ConversationSidebar = () => {
           <SidebarGroupContent>
             <SidebarMenu>
               {conversations.map((conversation) => (
-                <div>
-                  <SidebarMenuItem key={conversation.id}>
+                <div key={conversation.id}>
+                  <SidebarMenuItem>
                     <div className="group flex items-center w-full">
                       <SidebarMenuButton
                         asChild
