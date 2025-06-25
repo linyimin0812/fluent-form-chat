@@ -119,16 +119,6 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     if (validateForm()) {
       // Convert file objects to readable format for submission
       const submissionData = { ...formData };
-      schema.forEach(field => {
-        if (field.type === 'file' && submissionData[field.name]) {
-          const value = submissionData[field.name];
-          if (Array.isArray(value)) {
-            submissionData[field.name] = value.map(f => f.name).join(', ');
-          } else {
-            submissionData[field.name] = value.name;
-          }
-        }
-      });
       onSubmit(submissionData);
     }
   };
