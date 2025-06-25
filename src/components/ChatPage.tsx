@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import MessageBubble from './MessageBubble';
 import DynamicForm from './DynamicForm';
 import { ChatMessage, FormSchema } from '@/types/chat';
+import { useConversation } from '@/contexts/ConversationContext';
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -182,11 +183,25 @@ const mockPreviewSchema: FormSchema[] = [
 
 
 const ChatPage = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const { 
+    currentConversation, 
+    updateConversationMessages, 
+    createConversation 
+  } = useConversation();
+  
   const [inputValue, setInputValue] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [submittedDynamicFormData, setSubmittedDynamicFormData] = useState<Record<string, Record<string, any>> | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Initialize first conversation if none exists
+  useEffect(() => {
+    if (!currentConversation) {
+      createConversation('New Chat');
+    }
+  }, [currentConversation, createConversation]);
+
+  const messages = currentConversation?.messages || [];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -196,7 +211,15 @@ const ChatPage = () => {
     scrollToBottom();
   }, [messages]);
 
+  const updateMessages = (newMessages: ChatMessage[]) => {
+    if (currentConversation) {
+      updateConversationMessages(currentConversation.id, newMessages);
+    }
+  };
+
   const simulateStreamingResponse = async (userMessage: string, formData?: Record<string, any>) => {
+    if (!currentConversation) return;
+    
     setIsStreaming(true);
     
     // Add user message
@@ -207,7 +230,8 @@ const ChatPage = () => {
       timestamp: new Date()
     };
     
-    setMessages(prev => [...prev, newUserMessage]);
+    const updatedMessages = [...messages, newUserMessage];
+    updateMessages(updatedMessages);
 
     // Create AI response message
     const aiMessageId = uuidv4();
@@ -219,7 +243,8 @@ const ChatPage = () => {
       isStreaming: true
     };
     
-    setMessages(prev => [...prev, aiMessage]);
+    const messagesWithAI = [...updatedMessages, aiMessage];
+    updateMessages(messagesWithAI);
 
     let responses = [];
 
@@ -241,19 +266,18 @@ const ChatPage = () => {
       await new Promise(resolve => setTimeout(resolve, 5));
       const currentText = fullResponse.slice(0, i);
       
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiMessageId 
-          ? { ...msg, content: currentText }
-          : msg
-      ));
+      const currentMessages = [...updatedMessages, { ...aiMessage, content: currentText }];
+      updateMessages(currentMessages);
     }
 
     if (/.*创建.*/.test(userMessage)) {
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiMessageId 
-          ? { ...msg, isStreaming: false, formSchema: mockCreateSchema, formTitle: '创建分享配置 - 第一步' }
-          : msg
-      ));
+      const finalMessages = [...updatedMessages, { 
+        ...aiMessage, 
+        isStreaming: false, 
+        formSchema: mockCreateSchema, 
+        formTitle: '创建分享配置 - 第一步' 
+      }];
+      updateMessages(finalMessages);
     }
 
     setIsStreaming(false);
@@ -269,6 +293,8 @@ const ChatPage = () => {
   };
 
   const handleFormSubmit = async (id: string, formData: Record<string, any>) => {
+    if (!currentConversation) return;
+    
     setSubmittedDynamicFormData(prev => {
       return {
         ...prev,
@@ -276,15 +302,17 @@ const ChatPage = () => {
       };
     });
 
-    setMessages(prev => [...prev, {
-        id: uuidv4(),
-        content: ['```json', JSON.stringify(formData, null, 2), '```'].join("\n"),
-        role: 'user',
-        timestamp: new Date(),
-        isStreaming: false
-    }]);
+    const formSubmissionMessage: ChatMessage = {
+      id: uuidv4(),
+      content: ['```json', JSON.stringify(formData, null, 2), '```'].join("\n"),
+      role: 'user',
+      timestamp: new Date(),
+      isStreaming: false
+    };
+
+    const updatedMessages = [...messages, formSubmissionMessage];
+    updateMessages(updatedMessages);
     
-    // Continue with AI response processing the form data
     // Create AI response message after processing form data
     const aiMessageId = uuidv4();
 
@@ -299,10 +327,9 @@ const ChatPage = () => {
         timestamp: new Date(),
         isStreaming: false
       };
-      setMessages(prev => [...prev, aiMessage]);
-
+      const finalMessages = [...updatedMessages, aiMessage];
+      updateMessages(finalMessages);
       return;
-
     }
 
     aiMessage = {
@@ -313,7 +340,8 @@ const ChatPage = () => {
       isStreaming: true
     };
     
-    setMessages(prev => [...prev, aiMessage]);
+    const messagesWithAI = [...updatedMessages, aiMessage];
+    updateMessages(messagesWithAI);
     setIsStreaming(true);
 
     let formProcessingResponses: string[] = [`收到表单数据: \n`, '```json', JSON.stringify(formData, null, 2), '```'];
@@ -350,58 +378,60 @@ const ChatPage = () => {
       await new Promise(resolve => setTimeout(resolve, 5));
       const currentText = formProcessingResponse.slice(0, i);
       
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiMessageId 
-          ? { ...msg, content: currentText }
-          : msg
-      ));
+      const currentMessages = [...updatedMessages, { ...aiMessage, content: currentText }];
+      updateMessages(currentMessages);
     }
     
     setIsStreaming(false);
 
-    // bizType和spreadType配置完成后，渲染结果表单
+    // Update all the form schema assignments to use updateMessages
     if (formData && Object.keys(formData).includes('figmaUrl')) {
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiMessageId 
-          ? { ...msg, formSchema: mockBizTypeSchema, formTitle: '创建分享配置 - 第二步' }
-          : msg
-      ));
+      const finalMessages = [...updatedMessages, { 
+        ...aiMessage, 
+        formSchema: mockBizTypeSchema, 
+        formTitle: '创建分享配置 - 第二步' 
+      }];
+      updateMessages(finalMessages);
     }
 
     // panel创建
     if (formData && Object.keys(formData).includes('bizType')) {
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiMessageId 
-          ? { ...msg, formSchema: mockPanelSchema, formTitle: '创建面板配置' }
-          : msg
-      ));
+      const finalMessages = [...updatedMessages, { 
+        ...aiMessage, 
+        formSchema: mockPanelSchema, 
+        formTitle: '创建面板配置' 
+      }];
+      updateMessages(finalMessages);
     }
 
     // content创建
     if (formData && Object.keys(formData).includes('sharePanelTitle')) {
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiMessageId 
-          ? { ...msg, formSchema: mockContentSchema, formTitle: '创建分享内容配置' }
-          : msg
-      ));
+      const finalMessages = [...updatedMessages, { 
+        ...aiMessage, 
+        formSchema: mockContentSchema, 
+        formTitle: '创建分享内容配置' 
+      }];
+      updateMessages(finalMessages);
     }
 
     // 是否预览
     if (formData &&  Object.keys(formData).includes('templateId101')) {
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiMessageId 
-          ? { ...msg, formSchema: mockIsPreviewSchema, formTitle: '是否预览' }
-          : msg
-      ));
+      const finalMessages = [...updatedMessages, { 
+        ...aiMessage, 
+        formSchema: mockIsPreviewSchema, 
+        formTitle: '是否预览' 
+      }];
+      updateMessages(finalMessages);
     }
 
     // 预览内容
     if (formData &&  Object.keys(formData).includes('isPreview')) {
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiMessageId 
-          ? { ...msg, formSchema: mockPreviewSchema, formTitle: '预览内容' }
-          : msg
-      ));
+      const finalMessages = [...updatedMessages, { 
+        ...aiMessage, 
+        formSchema: mockPreviewSchema, 
+        formTitle: '预览内容' 
+      }];
+      updateMessages(finalMessages);
     }
 
     setMessages(prev => prev.map(msg => 
@@ -412,19 +442,30 @@ const ChatPage = () => {
 
   };
 
+  if (!currentConversation) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <h2 className="text-lg font-medium mb-2">No conversation selected</h2>
+          <p className="text-muted-foreground">Create a new conversation to get started.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col bg-gray-50 dark:bg-gray-900 h-full">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex-shrink-0 sticky top-0 z-20">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex-shrink-0">
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Share Agent
+          {currentConversation.name}
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Create a share configuration by conversation
         </p>
       </div>
 
-      {/* Messages Container - Fixed to prevent blank sections with long forms */}
+      {/* Messages Container */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-4 pb-40">
           {messages.length === 0 && (
@@ -457,7 +498,7 @@ const ChatPage = () => {
       </div>
 
       {/* Fixed Input Form */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 z-10">
+      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
         <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto">
           <div className="flex gap-2">
             <Input
