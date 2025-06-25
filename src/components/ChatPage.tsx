@@ -477,7 +477,7 @@ const ChatPage = () => {
   return (
     <div className="flex flex-col bg-gray-50 dark:bg-gray-900 h-full">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex-shrink-0 sticky top-0 z-20 flex">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-2 flex-shrink-0 sticky top-0 z-20 flex">
         <SidebarTrigger className="mr-2 cursor-pointer" />
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
