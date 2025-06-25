@@ -79,7 +79,7 @@ export class ChatApiService {
         content: '',
         role: 'assistant',
         timestamp: new Date(),
-        isStreaming: true,
+        isStreaming: false,
       };
 
       let hasFormSchema: boolean = false;
@@ -94,8 +94,6 @@ export class ChatApiService {
           }
 
           const chunk = decoder.decode(value);
-
-          console.log('Received chunk:', chunk);
 
           const chunkMessage = JSON.parse(chunk) as ChatMessage;
 
@@ -122,6 +120,7 @@ export class ChatApiService {
           }
 
           chunkMessage.content = fullMessage.content.trim();
+          chunkMessage.isStreaming = true;
 
           onChunk(JSON.stringify(chunkMessage));
 
