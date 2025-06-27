@@ -18,7 +18,7 @@ export class ChatApiService {
 
   async chat(agent: string, conversation: string, message: ChatApiMessage): Promise<ChatApiResponse> {
     try {
-      const response = await fetch(`http://127.0.0.1:8089/flux`, {
+      const response = await fetch(`http://127.0.0.1:8089/flux/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ export class ChatApiService {
     onChunk: (chunk: string) => void
   ): Promise<ChatApiResponse> {
     try {
-      const response = await fetch(`http://127.0.0.1:8089/flux`, {
+      const response = await fetch(`http://127.0.0.1:8089/api/chat/${agent}/${conversation}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +133,6 @@ export class ChatApiService {
 
       return { message: fullMessage };
     } catch (error) {
-      console.error('Chat API streaming error:', error);
       return {
         message: {} as ChatMessage,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
