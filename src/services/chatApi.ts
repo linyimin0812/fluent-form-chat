@@ -14,36 +14,9 @@ export interface ChatApiResponse {
   error?: string;
 }
 
+const BASE_URL = 'https://pre-houyi.admin.alibaba-inc.com';
+
 export class ChatApiService {
-
-  async chat(agent: string, conversation: string, message: ChatApiMessage): Promise<ChatApiResponse> {
-    try {
-      const response = await fetch(`http://127.0.0.1:8089/flux/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return {
-        message: data,
-      };
-    } catch (error) {
-      console.error('Chat API error:', error);
-      return {
-        message: null,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
-      };
-    }
-  }
 
   async stream(
     agent: string,
@@ -52,7 +25,7 @@ export class ChatApiService {
     onChunk: (chunk: string) => void
   ): Promise<ChatApiResponse> {
     try {
-      const response = await fetch(`http://127.0.0.1:8089/api/chat/${agent}/${conversation}`, {
+      const response = await fetch(`${BASE_URL}/api/chat/${agent}/${conversation}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
