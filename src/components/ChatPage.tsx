@@ -15,21 +15,19 @@ const mockBizTypeSchema: FormSchema[] = [
     name: 'bizType',
     label: 'bizType',
     type: 'select',
-    values: ['cashback', 'shakewin', 'prizeland'],
+    values: [{ label: 'Cashback', value: 'cashback' }, { label: 'Shakewin', value: 'shakewin' }, { label: 'Prizeland', value: 'prizeland' }],
     defaultValue: 'cashback'
   },
   {
     name: 'spreadType',
     label: 'spreadType',
     type: 'input',
-    values: [],
     defaultValue: 'default_spread_type'
   },
   {
     name: 'description',
     label: '场景描述',
     type: 'textarea',
-    values: [],
     required: false,
     defaultValue: '组队PK，邀请好友一起参与活动，赢取奖励'
   }
@@ -41,42 +39,36 @@ const mockPanelSchema: FormSchema[] = [
     name: 'sharePanelTitle',
     label: '标题',
     type: 'input',
-    values: [],
     defaultValue: 'Team Up for Rewards!'
   },
   {
     name: 'sharePanelSubTitle',
     label: '副标题',
     type: 'input',
-    values: [],
     defaultValue: '组队PK，邀请好友一起参与活动，赢取奖励'
   },
   {
     name: 'sharePanelTitleColor',
     label: '标题颜色',
     type: 'input',
-    values: [],
     defaultValue: '#000000'
   },
   {
     name: 'sharePanelTitleSubColor',
     label: '副标题颜色',
     type: 'input',
-    values: [],
     defaultValue: '#666666'
   },
   {
     name: 'backgroundUrl',
     label: '背景图片url',
     type: 'input',
-    values: [],
     defaultValue: 'https://example.com/default-background.jpg'
   },
   {
     name: 'activityNamePicUrl',
     label: '活动名称图片url',
     type: 'input',
-    values: [],
     defaultValue: 'https://example.com/default-background.jpg'
   }
 ];
@@ -86,28 +78,24 @@ const mockContentSchema: FormSchema[] = [
     name: 'shareTitle',
     label: '分享标题',
     type: 'input',
-    values: [],
     defaultValue: 'Team Up, Earn More'
   },
   {
     name: 'shareSubTitle',
     label: '分享副标题',
     type: 'input',
-    values: [],
     defaultValue: '邀请好友组队PK，赢取奖励'
   },
   {
     name: 'templateId101',
     label: '模板ID（1:1）',
     type: 'input',
-    values: [],
     defaultValue: uuidv4()
   },
   {
     name: 'templateId169',
     label: '模板ID（16:9）',
     type: 'input',
-    values: [],
     defaultValue: uuidv4()
   }
 ];
@@ -118,7 +106,7 @@ const mockIsPreviewSchema: FormSchema[] = [
     name: 'isPreview',
     label: '是否进行预览',
     type: 'switch',
-    values: [],
+    values: [{ label: '是', value: true }, { label: '否', value: false }],
     defaultValue: false,
     required: false,
   }
@@ -129,28 +117,24 @@ const mockPreviewSchema: FormSchema[] = [
     name: 'dynamicContent1',
     label: '动态文案 1',
     type: 'input',
-    values: [],
     defaultValue: '$ 1.00 Cashback for every friend you invite!'
   },
   {
     name: 'dynamicContent2',
     label: '动态文案 2',
     type: 'input',
-    values: [],
     defaultValue: 'Invite 5 friends to earn a $5 bonus!'
   },
   {
     name: 'dynamicImage1',
     label: '动态图片 1',
     type: 'input',
-    values: [],
     defaultValue: 'https://example.com/dynamic-image-1.jpg'
   },
   {
     name: 'dynamicImage2',
     label: '动态图片 2',
     type: 'input',
-    values: [],
     defaultValue: 'https://example.com/dynamic-image-1.jpg'
   }
 ];
@@ -191,7 +175,7 @@ const ChatPage = () => {
     }
   }; 
 
-  const handleApiResponse = async (userMessage: string) => {
+  const handleApiResponse = async (userMessage: string, formSubmitted: boolean) => {
 
     if (!currentConversation) return;
     
@@ -200,9 +184,9 @@ const ChatPage = () => {
     // Add user message
     const newUserMessage: ChatMessage = {
       id: uuidv4(),
-      content: userMessage,
+      chatContent: userMessage,
       role: 'user',
-      timestamp: new Date()
+      timestamp: Date.now(),
     };
     
     const updatedMessages = [...messages, newUserMessage];
@@ -210,26 +194,22 @@ const ChatPage = () => {
 
     const chatApiMessage: ChatApiMessage = {
         role: newUserMessage.role,
-        content: newUserMessage.content
+        content: newUserMessage.chatContent,
+        formSubmitted: formSubmitted || false
     }
 
     try {
       // Use streaming for real-time response
-      const response = await chatApiService.stream('agent', currentConversation.id, chatApiMessage, (chunk: string) => {
-        
-        const aiMessage = JSON.parse(chunk) as ChatMessage;
-
-        aiMessage.timestamp = new Date(aiMessage.timestamp || Date.now());
-
-        updateMessages([...updatedMessages, {...aiMessage}]);
+      const response = await chatApiService.stream('agent', currentConversation.id, chatApiMessage, (chunk: ChatMessage) => {
+        updateMessages([...updatedMessages, {...chunk}]);
       });
 
       if (response.error) {
         const aiMessage: ChatMessage = {
           id: uuidv4(),
-          content: `Error: ${response.error}`,
+          chatContent: `Error: ${response.error}`,
           role: 'assistant',
-          timestamp: new Date()
+          timestamp: Date.now()
         }
         updateMessages([...updatedMessages, {...aiMessage}]);
         return;
@@ -242,9 +222,9 @@ const ChatPage = () => {
 
       const aiMessage: ChatMessage = {
           id: uuidv4(),
-          content: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
+          chatContent: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
           role: 'assistant',
-          timestamp: new Date()
+          timestamp: Date.now(),
         }
         updateMessages([...updatedMessages, {...aiMessage}]);
     }
@@ -260,7 +240,7 @@ const ChatPage = () => {
     setInputValue('');
     // await simulateStreamingResponse(message);
 
-    await handleApiResponse(message);
+    await handleApiResponse(message, false);
 
   };
 
@@ -278,7 +258,7 @@ const ChatPage = () => {
       };
     });
 
-    await handleApiResponse(['```json', JSON.stringify(formData, null, 2), '```'].join("\n"));
+    await handleApiResponse(['```json', JSON.stringify(formData, null, 2), '```'].join("\n"), true);
 
   };
 
