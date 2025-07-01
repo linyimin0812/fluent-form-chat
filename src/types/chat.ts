@@ -1,9 +1,9 @@
 
 export interface ChatMessage {
   id: string;
-  content: string;
+  chatContent: string;
   role: 'user' | 'assistant';
-  timestamp: Date;
+  timestamp: number;
   isStreaming?: boolean;
   formSchema?: FormSchema[];
   formTitle?: string; // Dynamic form title
@@ -13,7 +13,7 @@ export interface FormSchema {
   name: string;
   label: string;
   type: 'input' | 'select' | 'file' | 'radio' | 'checkbox' | 'switch' | 'textarea' | 'toggle' | 'toggle-group';
-  values: string[];
+  values?: { label: string; value: any }[]; // For select, radio, checkbox, toggle-group
   accept?: string; // For file inputs - specify accepted file types
   multiple?: boolean; // For file inputs - allow multiple files
   defaultValue?: any; // Default value for the field
