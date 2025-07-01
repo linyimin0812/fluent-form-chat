@@ -3,6 +3,8 @@ import { ChatMessage, FormSchema } from "@/types/chat";
 export interface ChatApiMessage {
   role: 'user' | 'assistant';
   content: string;
+  formSubmitted: boolean;
+
 }
 
 export interface ChatApiRequest {
@@ -14,7 +16,10 @@ export interface ChatApiResponse {
   error?: string;
 }
 
-const BASE_URL = 'https://pre-houyi.admin.alibaba-inc.com';
+// const BASE_URL = 'https://pre-houyi.admin.alibaba-inc.com';
+
+const BASE_URL = 'http://localhost:8089';
+
 
 export class ChatApiService {
 
@@ -22,7 +27,7 @@ export class ChatApiService {
     agent: string,
     conversation: string,
     message: ChatApiMessage, 
-    onChunk: (chunk: string) => void
+    onChunk: (chunk: ChatMessage) => void
   ): Promise<ChatApiResponse> {
     try {
       const response = await fetch(`${BASE_URL}/api/chat/${agent}/${conversation}`, {
@@ -30,9 +35,7 @@ export class ChatApiService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          message,
-        }),
+        body: JSON.stringify(message),
       });
 
       if (!response.ok) {
@@ -49,62 +52,61 @@ export class ChatApiService {
 
       let fullMessage: ChatMessage = {
         id: '',
-        content: '',
+        chatContent: '',
         role: 'assistant',
-        timestamp: new Date(),
+        timestamp: Date.now(),
         isStreaming: false,
       };
 
-      let hasFormSchema: boolean = false;
-      let formSchemaContent: string = '';
+      let fullChatContent: string = '';
 
       while (true) {
 
-          const { done, value } = await reader.read();
+        const { done, value } = await reader.read();
 
-          if (done && !value) {
-            break;
-          }
-
-          const chunk = decoder.decode(value);
-
-          const chunkMessage = JSON.parse(chunk) as ChatMessage;
-
-          fullMessage.id = chunkMessage.id || fullMessage.id;
-          fullMessage.role = chunkMessage.role || fullMessage.role;
-          fullMessage.timestamp = chunkMessage.timestamp || fullMessage.timestamp;
-
-          const lines: string[] = chunkMessage.content.split('\n');
-
-          for (const line of lines) {
-
-            if (hasFormSchema) {
-              formSchemaContent += line.trim() !== '</dynamic_form_schema>' ? line : '';
-              continue;
-            }
-
-            if (line.trim() === '<dynamic_form_schema>') {
-              hasFormSchema = true;
-              continue;
-            }
-
-            fullMessage.content += line + '\n';
-
-          }
-
-          chunkMessage.content = fullMessage.content.trim();
-          chunkMessage.isStreaming = true;
-
-          onChunk(JSON.stringify(chunkMessage));
-
+        if (done && !value) {
+          break;
         }
 
+        const chunks: string[] = decoder.decode(value).split('__CHUNK_SEPARATOR__');
+
+        for (const chunk of chunks) {
+
+          if (!chunk.trim()) {
+            continue; 
+          }
+
+          const chunkMessage = JSON.parse(chunk);
+
+          chunkMessage.isStreaming = true;
+
+          if (chunkMessage.formSchema) {
+            chunkMessage.formSchema = JSON.parse(chunkMessage.formSchema) as FormSchema[] || [];
+          }
+
+          onChunk(chunkMessage);
+
+          if (!fullMessage.id) {
+            fullMessage.id = chunkMessage.id;
+            fullMessage.role = chunkMessage.role;
+            fullMessage.timestamp = chunkMessage.timestamp || Date.now();
+          }
+
+          if (chunkMessage.formSchema) {
+            fullMessage.formSchema = chunkMessage.formSchema;
+          }
+
+          fullChatContent = chunkMessage.chatContent || '';
+          
+        }
+
+      }
+
         fullMessage.isStreaming = false;
-        fullMessage.timestamp = new Date(fullMessage.timestamp || Date.now());
-        fullMessage.content = fullMessage.content.trim();
-        fullMessage.formSchema = hasFormSchema ? JSON.parse(formSchemaContent) as FormSchema[] : [];
+        fullMessage.chatContent = fullChatContent.trim();
 
       return { message: fullMessage };
+
     } catch (error) {
       return {
         message: {} as ChatMessage,
