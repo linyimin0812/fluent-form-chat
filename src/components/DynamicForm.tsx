@@ -228,8 +228,8 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             </SelectTrigger>
             <SelectContent>
               {field.values.map((option, index) => (
-                <SelectItem key={index} value={option}>
-                  {option}
+                <SelectItem key={index} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -246,8 +246,8 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
           >
             {field.values.map((option, index) => (
               <div key={index} className="flex items-center space-x-2">
-                <RadioGroupItem value={option} id={`${field.name}-${index}`} />
-                <Label htmlFor={`${field.name}-${index}`}>{option}</Label>
+                <RadioGroupItem value={option.value} id={`${field.name}-${index}`} />
+                <Label htmlFor={`${field.name}-${index}`}>{option.label}</Label>
               </div>
             ))}
           </RadioGroup>
@@ -269,12 +269,12 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                       if (checked) {
                         handleFieldChange(field.name, [...currentValues, option]);
                       } else {
-                        handleFieldChange(field.name, currentValues.filter(v => v !== option));
+                        handleFieldChange(field.name, currentValues.filter(v => v !== option.value));
                       }
                     }}
                     disabled={isDisabled}
                   />
-                  <Label htmlFor={`${field.name}-${index}`}>{option}</Label>
+                  <Label htmlFor={`${field.name}-${index}`}>{option.label}</Label>
                 </div>
               );
             })}
@@ -304,8 +304,8 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             className={`${errors[field.name] ? 'border border-red-500 rounded p-2' : ''}`}
           >
             {field.values.map((option, index) => (
-              <ToggleGroupItem key={index} value={option}>
-                {option}
+              <ToggleGroupItem key={index} value={option.value}>
+                {option.label}
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
