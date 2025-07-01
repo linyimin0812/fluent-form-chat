@@ -22,7 +22,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(message.content);
+      await navigator.clipboard.writeText(message.chatContent);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -70,7 +70,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             </Button>
 
             {message.isStreaming ? (
-              <StreamingText text={message.content} />
+              <StreamingText text={message.chatContent} />
             ) : (
               <div className="whitespace-pre-wrap break-words">
                 <div className={`
@@ -101,7 +101,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                       ),
                     }}
                   >
-                    {message.content}
+                    {message.chatContent}
                   </ReactMarkdown>
                 </div>
               </div>
@@ -114,7 +114,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           text-xs text-gray-400 dark:text-gray-500 mt-1.5 px-9
           ${isUser ? 'text-right' : 'text-left'}
         `}>
-          {message.timestamp.toLocaleTimeString([], { 
+          {new Date(message.timestamp || Date.now()).toLocaleTimeString([], { 
             hour: '2-digit', 
             minute: '2-digit' 
           })}
