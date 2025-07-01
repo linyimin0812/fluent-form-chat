@@ -45,9 +45,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             {isUser ? 'U' : 'AI'}
           </div>
           
-          {/* Message Content */}
+          {/* Message Content - Optimized for streaming */}
           <div className={`
-            relative group max-w-full
+            relative group max-w-full transform-gpu
             ${isUser 
               ? 'bg-blue-500 text-white rounded-2xl rounded-br-md px-3.5 py-2.5 shadow-sm' 
               : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-2xl rounded-bl-md px-3.5 py-2.5 shadow-sm'
@@ -59,7 +59,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               size="sm"
               onClick={handleCopy}
               className={`
-                absolute -top-0.5 -right-0.5 opacity-0 group-hover:opacity-100 transition-all duration-200 h-6 w-6 p-0 rounded-full
+                absolute -top-0.5 -right-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-6 w-6 p-0 rounded-full
                 ${isUser 
                   ? 'text-white/80 hover:text-white hover:bg-blue-600 bg-blue-600/50' 
                   : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600'
@@ -69,43 +69,48 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
             </Button>
 
-            {message.isStreaming ? (
-              <StreamingText text={message.chatContent} />
-            ) : (
-              <div className="whitespace-pre-wrap break-words">
-                <div className={`
-                  prose prose-sm max-w-none prose-p:my-1 prose-p:leading-relaxed
-                  ${isUser 
-                    ? 'prose-invert prose-headings:text-white prose-strong:text-white prose-code:text-white prose-pre:bg-blue-600' 
-                    : 'dark:prose-invert prose-headings:text-gray-900 dark:prose-headings:text-white'
-                  }
-                  prose-headings:font-semibold prose-headings:my-2
-                  prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5
-                  prose-blockquote:my-2 prose-blockquote:border-l-2
-                  prose-code:text-sm prose-code:px-1 prose-code:py-0.5 prose-code:rounded
-                  prose-pre:text-sm prose-pre:rounded-lg prose-pre:my-2
-                `}>
-                  <ReactMarkdown 
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[[rehypeHighlight, { languages: { json } }]]}
-                    components={{
-                      img: ({ src, alt }) => (
-                        <img
-                          src={src ?? ''}
-                          alt={alt ?? ''}
-                          className="my-2 rounded-lg shadow-sm max-w-xs h-auto"
-                        />
-                      ),
-                      p: ({ children }) => (
-                        <p className="my-1 last:mb-0 first:mt-0">{children}</p>
-                      ),
-                    }}
-                  >
-                    {message.chatContent}
-                  </ReactMarkdown>
+            {/* Content Container - Isolated from animations */}
+            <div className="relative">
+              {message.isStreaming ? (
+                <div className="min-h-[1.25rem]">
+                  <StreamingText text={message.chatContent} />
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="whitespace-pre-wrap break-words">
+                  <div className={`
+                    prose prose-sm max-w-none prose-p:my-1 prose-p:leading-relaxed
+                    ${isUser 
+                      ? 'prose-invert prose-headings:text-white prose-strong:text-white prose-code:text-white prose-pre:bg-blue-600' 
+                      : 'dark:prose-invert prose-headings:text-gray-900 dark:prose-headings:text-white'
+                    }
+                    prose-headings:font-semibold prose-headings:my-2
+                    prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5
+                    prose-blockquote:my-2 prose-blockquote:border-l-2
+                    prose-code:text-sm prose-code:px-1 prose-code:py-0.5 prose-code:rounded
+                    prose-pre:text-sm prose-pre:rounded-lg prose-pre:my-2
+                  `}>
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[[rehypeHighlight, { languages: { json } }]]}
+                      components={{
+                        img: ({ src, alt }) => (
+                          <img
+                            src={src ?? ''}
+                            alt={alt ?? ''}
+                            className="my-2 rounded-lg shadow-sm max-w-xs h-auto"
+                          />
+                        ),
+                        p: ({ children }) => (
+                          <p className="my-1 last:mb-0 first:mt-0">{children}</p>
+                        ),
+                      }}
+                    >
+                      {message.chatContent}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         
