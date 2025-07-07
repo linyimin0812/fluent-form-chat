@@ -151,6 +151,7 @@ const ChatPage = () => {
   
   const [inputValue, setInputValue] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
   const [submittedDynamicFormData, setSubmittedDynamicFormData] = useState<Record<string, Record<string, any>> | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -182,6 +183,7 @@ const ChatPage = () => {
     if (!currentConversation) return;
     
     setIsStreaming(true);
+    setIsWaitingForResponse(true);
     
     // Add user message
     const newUserMessage: ChatMessage = {
@@ -203,6 +205,7 @@ const ChatPage = () => {
     try {
       // Use streaming for real-time response
       const response = await chatApiService.stream('agent', currentConversation.id, chatApiMessage, (chunk: ChatMessage) => {
+        setIsWaitingForResponse(false); // Hide loading indicator once streaming starts
         updateMessages([...updatedMessages, {...chunk}]);
       });
 
@@ -214,6 +217,7 @@ const ChatPage = () => {
           timestamp: Date.now()
         }
         updateMessages([...updatedMessages, {...aiMessage}]);
+        setIsWaitingForResponse(false);
         return;
       }
 
@@ -229,9 +233,11 @@ const ChatPage = () => {
           timestamp: Date.now(),
         }
         updateMessages([...updatedMessages, {...aiMessage}]);
+        setIsWaitingForResponse(false);
     }
 
     setIsStreaming(false);
+    setIsWaitingForResponse(false);
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -318,8 +324,8 @@ const ChatPage = () => {
             </div>
           ))}
           
-          {/* Show loading indicator when streaming */}
-          {isStreaming && <LoadingMessage />}
+          {/* Show loading indicator only when waiting for response to start */}
+          {isWaitingForResponse && <LoadingMessage />}
           
           <div ref={messagesEndRef} />
         </div>
