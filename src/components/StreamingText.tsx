@@ -21,8 +21,8 @@ const StreamingText: React.FC<StreamingTextProps> = ({ text }) => {
   }, [text]);
 
   return (
-    <div className="whitespace-pre-wrap break-words">
-      <span>{displayText}</span>
+    <div className="break-words overflow-wrap-anywhere">
+      <span className="whitespace-pre-wrap">{displayText}</span>
       <span 
         className={`inline-block w-0.5 h-4 bg-current ml-0.5 transition-opacity duration-100 ${
           showCursor ? 'opacity-100' : 'opacity-0'

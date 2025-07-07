@@ -32,7 +32,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
-      <div className={`max-w-[85%] lg:max-w-[75%] ${isUser ? 'order-2' : 'order-1'}`}>
+      <div className={`max-w-[90%] sm:max-w-[85%] lg:max-w-[75%] xl:max-w-[70%] ${isUser ? 'order-2' : 'order-1'}`}>
         {/* Avatar and Message Content */}
         <div className={`flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
           <div className={`
@@ -45,9 +45,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             {isUser ? 'U' : 'AI'}
           </div>
           
-          {/* Message Content - Optimized for streaming */}
+          {/* Message Content - Optimized for text wrapping */}
           <div className={`
-            relative group max-w-full transform-gpu
+            relative group min-w-0 flex-1 transform-gpu
             ${isUser 
               ? 'bg-blue-500 text-white rounded-2xl rounded-br-md px-3.5 py-2.5 shadow-sm' 
               : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-2xl rounded-bl-md px-3.5 py-2.5 shadow-sm'
@@ -69,14 +69,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
             </Button>
 
-            {/* Content Container - Isolated from animations */}
-            <div className="relative">
+            {/* Content Container - Enhanced for better text wrapping */}
+            <div className="relative min-w-0">
               {message.isStreaming ? (
                 <div className="min-h-[1.25rem]">
                   <StreamingText text={message.chatContent} />
                 </div>
               ) : (
-                <div className="whitespace-pre-wrap break-words">
+                <div className="break-words overflow-wrap-anywhere">
                   <div className={`
                     prose prose-sm max-w-none prose-p:my-1 prose-p:leading-relaxed
                     ${isUser 
@@ -86,8 +86,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                     prose-headings:font-semibold prose-headings:my-2
                     prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5
                     prose-blockquote:my-2 prose-blockquote:border-l-2
-                    prose-code:text-sm prose-code:px-1 prose-code:py-0.5 prose-code:rounded
-                    prose-pre:text-sm prose-pre:rounded-lg prose-pre:my-2
+                    prose-code:text-sm prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:break-all
+                    prose-pre:text-sm prose-pre:rounded-lg prose-pre:my-2 prose-pre:overflow-x-auto
                   `}>
                     <ReactMarkdown 
                       remarkPlugins={[remarkGfm]}
@@ -97,11 +97,22 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                           <img
                             src={src ?? ''}
                             alt={alt ?? ''}
-                            className="my-2 rounded-lg shadow-sm max-w-xs h-auto"
+                            className="my-2 rounded-lg shadow-sm max-w-full h-auto"
                           />
                         ),
                         p: ({ children }) => (
-                          <p className="my-1 last:mb-0 first:mt-0">{children}</p>
+                          <p className="my-1 last:mb-0 first:mt-0 break-words">{children}</p>
+                        ),
+                        code: ({ children, className }) => {
+                          const isInline = !className;
+                          return isInline ? (
+                            <code className="break-all">{children}</code>
+                          ) : (
+                            <code className={className}>{children}</code>
+                          );
+                        },
+                        pre: ({ children }) => (
+                          <pre className="overflow-x-auto whitespace-pre-wrap break-words">{children}</pre>
                         ),
                       }}
                     >
