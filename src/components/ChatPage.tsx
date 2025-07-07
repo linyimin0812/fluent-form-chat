@@ -184,7 +184,7 @@ const ChatPage = () => {
     // Add user message
     const newUserMessage: ChatMessage = {
       id: uuidv4(),
-      chatContent: userMessage,
+      chatContent: formSubmitted ? ['```json', userMessage, '```'].join("\n") : userMessage,
       role: 'user',
       timestamp: Date.now(),
     };
@@ -194,7 +194,7 @@ const ChatPage = () => {
 
     const chatApiMessage: ChatApiMessage = {
         role: newUserMessage.role,
-        content: newUserMessage.chatContent,
+        content: userMessage,
         formSubmitted: formSubmitted || false
     }
 
@@ -258,7 +258,7 @@ const ChatPage = () => {
       };
     });
 
-    await handleApiResponse(['```json', JSON.stringify(formData, null, 2), '```'].join("\n"), true);
+    await handleApiResponse(JSON.stringify(formData, null, 2), true);
 
   };
 
