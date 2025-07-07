@@ -9,6 +9,8 @@ import { useConversation } from '@/contexts/ConversationContext';
 import { chatApiService, ChatApiMessage } from '@/services/chatApi';
 import { v4 as uuidv4 } from 'uuid';
 import { SidebarTrigger } from './ui/sidebar';
+import LoadingMessage from './LoadingMessage';
+import { Loader } from 'lucide-react';
 
 const mockBizTypeSchema: FormSchema[] = [
   {
@@ -316,6 +318,9 @@ const ChatPage = () => {
             </div>
           ))}
           
+          {/* Show loading indicator when streaming */}
+          {isStreaming && <LoadingMessage />}
+          
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -327,7 +332,7 @@ const ChatPage = () => {
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Type your message..."
+              placeholder={isStreaming ? "AI is responding..." : "Type your message..."}
               disabled={isStreaming}
               className="flex-1"
             />
@@ -336,7 +341,11 @@ const ChatPage = () => {
               disabled={!inputValue.trim() || isStreaming}
               size="sm"
             >
-              <Send className="h-4 w-4" />
+              {isStreaming ? (
+                <Loader className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </form>
