@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, RotateCcw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { ChatMessage } from '@/types/chat';
 import StreamingText from './StreamingText';
@@ -14,9 +14,10 @@ import json from 'highlight.js/lib/languages/json';
 
 interface MessageBubbleProps {
   message: ChatMessage;
+  onRetry?: () => void;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onRetry }) => {
   const isUser = message.role === 'user';
   const [copied, setCopied] = useState(false);
   
@@ -53,21 +54,37 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-2xl rounded-bl-md px-3.5 py-2.5 shadow-sm'
             }
           `}>
-            {/* Copy Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCopy}
-              className={`
-                absolute -top-0.5 -right-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-6 w-6 p-0 rounded-full
-                ${isUser 
-                  ? 'text-white/80 hover:text-white hover:bg-blue-600 bg-blue-600/50' 
-                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600'
-                }
-              `}
-            >
-              {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-            </Button>
+            {/* Action Buttons */}
+            <div className="absolute -top-0.5 -right-0.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              {/* Copy Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopy}
+                className={`
+                  h-6 w-6 p-0 rounded-full
+                  ${isUser 
+                    ? 'text-white/80 hover:text-white hover:bg-blue-600 bg-blue-600/50' 
+                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600'
+                  }
+                `}
+              >
+                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              </Button>
+              
+              {/* Retry Button - Only for AI messages */}
+              {!isUser && onRetry && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onRetry}
+                  className="h-6 w-6 p-0 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600"
+                  title="Retry this message"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
 
             {/* Content Container - Enhanced for better text wrapping */}
             <div className="relative min-w-0">

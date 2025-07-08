@@ -178,6 +178,37 @@ const ChatPage = () => {
     }
   }; 
 
+  const handleRetry = async (messageId: string) => {
+    if (!currentConversation || isStreaming) return;
+
+    // Find the message to retry
+    const messageIndex = messages.findIndex(msg => msg.id === messageId);
+    if (messageIndex === -1) return;
+
+    // Find the preceding user message
+    let userMessageIndex = messageIndex - 1;
+    while (userMessageIndex >= 0 && messages[userMessageIndex].role !== 'user') {
+      userMessageIndex--;
+    }
+
+    if (userMessageIndex === -1) return;
+
+    const userMessage = messages[userMessageIndex];
+    
+    // Remove all messages from the AI message being retried onwards
+    const messagesToKeep = messages.slice(0, messageIndex);
+    updateMessages(messagesToKeep);
+
+    // Determine if this was a form submission by checking the message format
+    const isFormSubmission = userMessage.chatContent.startsWith('```json');
+    const messageContent = isFormSubmission 
+      ? userMessage.chatContent.replace(/```json\n/, '').replace(/\n```$/, '')
+      : userMessage.chatContent;
+
+    // Re-trigger the API request
+    await handleApiResponse(messageContent, isFormSubmission);
+  };
+
   const handleApiResponse = async (userMessage: string, formSubmitted: boolean) => {
 
     if (!currentConversation) return;
@@ -310,7 +341,10 @@ const ChatPage = () => {
           
           {messages.map((message) => (
             <div key={message.id}>
-              <MessageBubble message={message} />
+              <MessageBubble 
+                message={message} 
+                onRetry={message.role === 'assistant' ? () => handleRetry(message.id) : undefined}
+              />
               {message.formSchema && (
                 <div className="max-w-2xl mx-auto mb-4">
                   <DynamicForm 
