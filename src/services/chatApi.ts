@@ -18,7 +18,7 @@ export interface ChatApiResponse {
 
 // const BASE_URL = 'https://pre-houyi.admin.alibaba-inc.com';
 
-const BASE_URL = 'http://localhost:8089';
+const BASE_URL = 'http://localhost:8090';
 
 
 export class ChatApiService {
@@ -30,7 +30,7 @@ export class ChatApiService {
     onChunk: (chunk: ChatMessage) => void
   ): Promise<ChatApiResponse> {
     try {
-      const response = await fetch(`${BASE_URL}/api/chat/${agent}/${conversation}`, {
+      const response = await fetch(`${BASE_URL}/api/chat/forward/${agent}/${conversation}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -68,15 +68,30 @@ export class ChatApiService {
           break;
         }
 
+        let buffer: string = '';
+
         const chunks: string[] = decoder.decode(value).split('__CHUNK_SEPARATOR__');
 
-        for (const chunk of chunks) {
+        for (let chunk of chunks) {
 
           if (!chunk.trim()) {
             continue; 
           }
 
-          const chunkMessage = JSON.parse(chunk);
+          if (buffer) {
+            chunk = buffer + chunk;
+          }
+
+          let chunkMessage;
+
+          // 保证每个 chunk 都是完整的 JSON 对象
+          try {
+            chunkMessage = JSON.parse(chunk);
+            buffer = '';
+          } catch (e) {
+            buffer += chunk;
+            continue;
+          }
 
           chunkMessage.isStreaming = true;
 
@@ -97,9 +112,7 @@ export class ChatApiService {
           }
 
           fullChatContent = chunkMessage.chatContent || '';
-          
         }
-
       }
 
         fullMessage.isStreaming = false;
