@@ -24,7 +24,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
   schema, 
   onSubmit, 
   submittedData = null,
-  title = 'Additional Information Required'
+  title = '信息表单'
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -335,12 +335,12 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
         <CardTitle className="text-lg font-medium">
           {title}
         </CardTitle>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        {/* <p className="text-sm text-gray-600 dark:text-gray-400">
           {isSubmitted 
             ? 'Thank you for providing the information. Processing your request...'
             : 'Please provide the following information to continue:'
           }
-        </p>
+        </p> */}
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
