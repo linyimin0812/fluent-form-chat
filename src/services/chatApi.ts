@@ -16,7 +16,7 @@ export interface ChatApiResponse {
   error?: string;
 }
 
-// const BASE_URL = 'http://localhost:8090';
+const BASE_URL = 'http://localhost:8089';
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -34,7 +34,7 @@ export class ChatApiService {
     onChunk: (chunk: ChatMessage) => void
   ): Promise<ChatApiResponse> {
     try {
-      const response = await fetch(`/api/chat/${agent}/${conversation}`, {
+      const response = await fetch(`${BASE_URL}/api/chat/${agent}/${conversation}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
