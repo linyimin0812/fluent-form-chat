@@ -16,8 +16,6 @@ export interface ChatApiResponse {
   error?: string;
 }
 
-// const BASE_URL = 'https://pre-houyi.admin.alibaba-inc.com';
-
 // const BASE_URL = 'http://localhost:8090';
 
 function getCookie(name) {
