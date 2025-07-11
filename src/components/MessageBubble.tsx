@@ -32,7 +32,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onRetry }) => {
   };
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3 mx-[14px]`}>
       <div className={`max-w-[90%] sm:max-w-[85%] lg:max-w-[75%] xl:max-w-[70%] ${isUser ? 'order-2' : 'order-1'}`}>
         {/* Avatar and Message Content */}
         <div className={`flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
