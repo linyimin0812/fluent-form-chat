@@ -18,7 +18,13 @@ export interface ChatApiResponse {
 
 // const BASE_URL = 'https://pre-houyi.admin.alibaba-inc.com';
 
-const BASE_URL = 'http://localhost:8090';
+// const BASE_URL = 'http://localhost:8090';
+
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
 
 
 export class ChatApiService {
@@ -30,11 +36,13 @@ export class ChatApiService {
     onChunk: (chunk: ChatMessage) => void
   ): Promise<ChatApiResponse> {
     try {
-      const response = await fetch(`${BASE_URL}/api/chat/forward/${agent}/${conversation}`, {
+      const response = await fetch(`/api/chat/${agent}/${conversation}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-XSRF-TOKEN': getCookie('XSRF-TOKEN'),
         },
+        credentials: 'include',
         body: JSON.stringify(message),
       });
 
