@@ -108,37 +108,39 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onRetry }) => {
               )}
             </div>
 
-            {/* Action Buttons - Inside message box */}
-            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              {/* Copy Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopy}
-                className={`
-                  h-6 w-6 p-0 rounded-md
-                  ${isUser 
-                    ? 'text-white/70 hover:text-white hover:bg-white/10' 
-                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }
-                `}
-                title={copied ? "Copied!" : "Copy message"}
-              >
-                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              </Button>
-              
-              {/* Retry Button - Only for AI messages */}
-              {!isUser && onRetry && (
+            {/* Action Buttons - Lower right corner on separate line */}
+            <div className="flex justify-end mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <div className="flex gap-1">
+                {/* Copy Button */}
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onRetry}
-                  className="h-6 w-6 p-0 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  title="Retry this message"
+                  onClick={handleCopy}
+                  className={`
+                    h-6 w-6 p-0 rounded-md
+                    ${isUser 
+                      ? 'text-white/70 hover:text-white hover:bg-white/10' 
+                      : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }
+                  `}
+                  title={copied ? "Copied!" : "Copy message"}
                 >
-                  <RotateCcw className="h-3 w-3" />
+                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                 </Button>
-              )}
+                
+                {/* Retry Button - Only for AI messages */}
+                {!isUser && onRetry && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onRetry}
+                    className="h-6 w-6 p-0 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    title="Retry this message"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
