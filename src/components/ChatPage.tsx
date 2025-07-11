@@ -302,25 +302,27 @@ const ChatPage = () => {
       <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
         <div className="max-w-4xl mx-auto">
           <form onSubmit={handleSendMessage}>
-            <div className="flex gap-2">
-              <Input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder={isStreaming ? "AI is responding..." : "Type your message..."}
-                disabled={isStreaming}
-                className="flex-1"
-              />
-              <Button 
-                type="submit" 
-                disabled={!inputValue.trim() || isStreaming}
-                size="sm"
-              >
-                {isStreaming ? (
-                  <Loader className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
+            <div className="flex justify-center">
+              <div className="flex gap-2 w-full max-w-2xl">
+                <Input
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder={isStreaming ? "AI is responding..." : "Type your message..."}
+                  disabled={isStreaming}
+                  className="flex-1"
+                />
+                <Button 
+                  type="submit" 
+                  disabled={!inputValue.trim() || isStreaming}
+                  size="sm"
+                >
+                  {isStreaming ? (
+                    <Loader className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
           </form>
         </div>
