@@ -54,41 +54,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onRetry }) => {
               : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-2xl rounded-bl-md px-3.5 py-2.5 shadow-sm'
             }
           `}>
-            {/* Action Buttons */}
-            <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-              {/* Copy Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopy}
-                className={`
-                  h-7 w-7 p-0 rounded-full shadow-lg backdrop-blur-sm
-                  ${isUser 
-                    ? 'text-white hover:text-white hover:bg-blue-600/80 bg-blue-500/70 border border-white/20' 
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-600 bg-white/90 dark:bg-gray-700/90 border border-gray-200 dark:border-gray-600'
-                  }
-                `}
-                title={copied ? "Copied!" : "Copy message"}
-              >
-                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              </Button>
-              
-              {/* Retry Button - Only for AI messages */}
-              {!isUser && onRetry && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onRetry}
-                  className="h-7 w-7 p-0 rounded-full shadow-lg backdrop-blur-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-600 bg-white/90 dark:bg-gray-700/90 border border-gray-200 dark:border-gray-600"
-                  title="Retry this message"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </div>
-
             {/* Content Container - Enhanced for better text wrapping */}
-            <div className="relative min-w-0">
+            <div className="relative min-w-0 pr-16">
               {message.isStreaming ? (
                 <div className="min-h-[1.25rem]">
                   <StreamingText text={message.chatContent} />
@@ -138,6 +105,39 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onRetry }) => {
                     </ReactMarkdown>
                   </div>
                 </div>
+              )}
+            </div>
+
+            {/* Action Buttons - Inside message box */}
+            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              {/* Copy Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopy}
+                className={`
+                  h-6 w-6 p-0 rounded-md
+                  ${isUser 
+                    ? 'text-white/70 hover:text-white hover:bg-white/10' 
+                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }
+                `}
+                title={copied ? "Copied!" : "Copy message"}
+              >
+                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              </Button>
+              
+              {/* Retry Button - Only for AI messages */}
+              {!isUser && onRetry && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onRetry}
+                  className="h-6 w-6 p-0 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  title="Retry this message"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                </Button>
               )}
             </div>
           </div>
