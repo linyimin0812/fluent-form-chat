@@ -55,7 +55,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onRetry }) => {
             }
           `}>
             {/* Content Container - Enhanced for better text wrapping */}
-            <div className="relative min-w-0 pr-16">
+            <div className="relative min-w-0">
               {message.isStreaming ? (
                 <div className="min-h-[1.25rem]">
                   <StreamingText text={message.chatContent} />
