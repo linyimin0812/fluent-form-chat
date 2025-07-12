@@ -35,8 +35,11 @@ const ChatPage = () => {
 
   // Reset loading states when switching conversations
   useEffect(() => {
-    setIsStreaming(false);
-    setIsWaitingForResponse(false);
+    if (currentConversation?.id) {
+      console.log('Switching to conversation:', currentConversation.id, 'resetting loading states');
+      setIsStreaming(false);
+      setIsWaitingForResponse(false);
+    }
   }, [currentConversation?.id]);
 
   const messages = currentConversation?.messages || [];

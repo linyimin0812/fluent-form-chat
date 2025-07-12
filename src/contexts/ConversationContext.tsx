@@ -66,11 +66,13 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   const deleteConversation = (id: string) => {
-    setConversations(prev => prev.filter(conv => conv.id !== id));
-    if (currentConversationId === id) {
-      const remaining = conversations.filter(conv => conv.id !== id);
-      setCurrentConversationId(remaining.length > 0 ? remaining[0].id : null);
-    }
+    setConversations(prev => {
+      const filtered = prev.filter(conv => conv.id !== id);
+      if (currentConversationId === id) {
+        setCurrentConversationId(filtered.length > 0 ? filtered[0].id : null);
+      }
+      return filtered;
+    });
   };
 
   const renameConversation = (id: string, name: string) => {
