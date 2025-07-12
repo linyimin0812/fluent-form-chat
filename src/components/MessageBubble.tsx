@@ -111,8 +111,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onRetry }) => {
           </div>
         </div>
         
-        {/* Timestamp and Action Buttons */}
-        <div className="flex justify-between items-center mt-1.5 px-[42px] group">
+        {/* Timestamp and Action Buttons - Full width container */}
+        <div className={`flex justify-between items-center mt-1.5 group ${isUser ? 'pr-[42px]' : 'pl-[42px]'}`}>
           <div className="text-xs text-gray-400 dark:text-gray-500">
             {new Date(message.timestamp || Date.now()).toLocaleTimeString([], { 
               hour: '2-digit', 
