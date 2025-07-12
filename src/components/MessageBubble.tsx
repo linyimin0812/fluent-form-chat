@@ -129,10 +129,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onRetry }) => {
               onClick={handleCopy}
               className={`
                 h-6 w-6 p-0 rounded-md
-                ${isUser 
-                  ? 'text-white/70 hover:text-white hover:bg-white/10' 
-                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }
+                text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700
               `}
               title={copied ? "Copied!" : "Copy message"}
             >
