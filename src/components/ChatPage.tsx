@@ -33,6 +33,12 @@ const ChatPage = () => {
     }
   }, [currentConversation, createConversation]);
 
+  // Reset loading states when switching conversations
+  useEffect(() => {
+    setIsStreaming(false);
+    setIsWaitingForResponse(false);
+  }, [currentConversation?.id]);
+
   const messages = currentConversation?.messages || [];
 
   const scrollToBottom = () => {
