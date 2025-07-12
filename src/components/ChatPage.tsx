@@ -299,7 +299,7 @@ const ChatPage = () => {
       </div>
 
       {/* Fixed Input Form */}
-      <div className="sticky bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+      <div className="sticky bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-3">
         <div className="max-w-4xl mx-auto">
           <form onSubmit={handleSendMessage}>
             <div className="flex justify-center">
