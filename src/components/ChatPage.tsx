@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MessageBubble from './MessageBubble';
 import DynamicForm from './DynamicForm';
-import { ChatMessage, FormSchema } from '@/types/chat';
+import { ChatMessage } from '@/types/chat';
 import { useConversation } from '@/contexts/ConversationContext';
 import { chatApiService, ChatApiMessage } from '@/services/chatApi';
 import { v4 as uuidv4 } from 'uuid';
@@ -59,96 +59,7 @@ const ChatPage = () => {
   }; 
 
   const handleRetry = async (messageId: string) => {
-    if (!currentConversation || isStreaming) return;
-
-    // Find the message to retry and the preceding user message
-    const messageIndex = messages.findIndex(msg => msg.id === messageId);
-    if (messageIndex === -1) return;
-
-    let userMessageIndex = messageIndex - 1;
-    while (userMessageIndex >= 0 && messages[userMessageIndex].role !== 'user') {
-      userMessageIndex--;
-    }
-
-    if (userMessageIndex === -1) return;
-
-    const userMessage = messages[userMessageIndex];
-    const aiMessage = messages[messageIndex];
     
-    // Determine if this was a form submission
-    const isFormSubmission = userMessage.chatContent.startsWith('```json');
-    const messageContent = isFormSubmission 
-      ? userMessage.chatContent.replace(/```json\n/, '').replace(/\n```$/, '')
-      : userMessage.chatContent;
-
-    // Clear the AI message content and mark as streaming
-    const updatedMessages = [...messages];
-    updatedMessages[messageIndex] = {
-      ...aiMessage,
-      chatContent: '',
-      isStreaming: true,
-      formSchema: undefined,
-      formTitle: undefined
-    };
-    updateMessages(updatedMessages);
-
-    // Re-trigger the API request with in-place update
-    await handleApiResponseInPlace(messageContent, isFormSubmission, messageIndex);
-  };
-
-  const handleApiResponseInPlace = async (userMessage: string, formSubmitted: boolean, targetMessageIndex: number) => {
-    if (!currentConversation) return;
-    
-    setIsStreaming(true);
-    setIsWaitingForResponse(true);
-
-    const chatApiMessage: ChatApiMessage = {
-        role: 'user',
-        content: userMessage,
-        formSubmitted: formSubmitted || false
-    }
-
-    try {
-      // Use streaming for real-time response
-      const response = await chatApiService.stream('agent', currentConversation.id, chatApiMessage, (chunk: ChatMessage) => {
-        setIsWaitingForResponse(false);
-        
-        // Update the specific AI message in place
-        const updatedMessages = [...messages];
-        updatedMessages[targetMessageIndex] = {...chunk};
-        updateMessages(updatedMessages);
-      });
-
-      if (response.error) {
-        const updatedMessages = [...messages];
-        updatedMessages[targetMessageIndex] = {
-          ...updatedMessages[targetMessageIndex],
-          chatContent: `Error: ${response.error}`,
-          isStreaming: false
-        };
-        updateMessages(updatedMessages);
-        setIsWaitingForResponse(false);
-        return;
-      }
-
-      // Mark as complete
-      const updatedMessages = [...messages];
-      updatedMessages[targetMessageIndex] = {...response.message};
-      updateMessages(updatedMessages);
-
-    } catch (error) {
-      const updatedMessages = [...messages];
-      updatedMessages[targetMessageIndex] = {
-        ...updatedMessages[targetMessageIndex],
-        chatContent: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
-        isStreaming: false
-      };
-      updateMessages(updatedMessages);
-      setIsWaitingForResponse(false);
-    }
-
-    setIsStreaming(false);
-    setIsWaitingForResponse(false);
   };
 
   const handleApiResponse = async (userMessage: string, formSubmitted: boolean) => {
@@ -191,11 +102,10 @@ const ChatPage = () => {
         }
         updateMessages([...updatedMessages, {...aiMessage}]);
         setIsWaitingForResponse(false);
-        return;
+      } else {
+        // Mark as complete
+        updateMessages([...updatedMessages, {...response.message}]);
       }
-
-      // Mark as complete
-      updateMessages([...updatedMessages, {...response.message}]);
 
     } catch (error) {
 
