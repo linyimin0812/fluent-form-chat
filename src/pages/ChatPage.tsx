@@ -1,22 +1,24 @@
-
-import React, { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
+import { Send, StopCircle, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import MessageBubble from './MessageBubble';
-import DynamicForm from './DynamicForm';
-import { ChatMessage } from '@/types/chat';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useConversation } from '@/contexts/ConversationContext';
+import MessageBubble from '@/components/MessageBubble';
+import LoadingMessage from '@/components/LoadingMessage';
+import DynamicForm from '@/components/DynamicForm';
 import { chatApiService, ChatApiMessage } from '@/services/chatApi';
+import { ChatMessage } from '@/types/chat';
 import { v4 as uuidv4 } from 'uuid';
-import { SidebarTrigger } from './ui/sidebar';
-import LoadingMessage from './LoadingMessage';
-import { Loader } from 'lucide-react';
 
 const ChatPage = () => {
+  const { '*': path } = useParams();
+  const agentName = path?.split('/')[0] || 'assistant';
+  
   const { 
     currentConversation, 
-    updateConversationMessages, 
+    updateConversationMessages,
     createConversation 
   } = useConversation();
   
@@ -29,9 +31,9 @@ const ChatPage = () => {
   // Initialize first conversation if none exists
   useEffect(() => {
     if (!currentConversation) {
-      createConversation('New Chat');
+      createConversation(`${agentName.charAt(0).toUpperCase() + agentName.slice(1)} Chat`);
     }
-  }, [currentConversation, createConversation]);
+  }, [currentConversation, createConversation, agentName]);
 
   // Reset loading states when switching conversations
   useEffect(() => {
@@ -50,7 +52,7 @@ const ChatPage = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isStreaming, isWaitingForResponse]);
 
   const updateMessages = (newMessages: ChatMessage[]) => {
     if (currentConversation) {
@@ -58,12 +60,7 @@ const ChatPage = () => {
     }
   }; 
 
-  const handleRetry = async (messageId: string) => {
-    
-  };
-
   const handleApiResponse = async (userMessage: string, formSubmitted: boolean) => {
-
     if (!currentConversation) return;
     
     setIsStreaming(true);
@@ -88,7 +85,7 @@ const ChatPage = () => {
 
     try {
       // Use streaming for real-time response
-      const response = await chatApiService.stream('agent', currentConversation.id, chatApiMessage, (chunk: ChatMessage) => {
+      const response = await chatApiService.stream(agentName, currentConversation.id, chatApiMessage, (chunk: ChatMessage) => {
         setIsWaitingForResponse(false); // Hide loading indicator once streaming starts
         updateMessages([...updatedMessages, {...chunk}]);
       });
@@ -108,7 +105,6 @@ const ChatPage = () => {
       }
 
     } catch (error) {
-
       const aiMessage: ChatMessage = {
           id: uuidv4(),
           chatContent: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
@@ -129,14 +125,11 @@ const ChatPage = () => {
 
     const message = inputValue;
     setInputValue('');
-    // await simulateStreamingResponse(message);
 
     await handleApiResponse(message, false);
-
   };
 
   const handleFormSubmit = async (id: string, formData: Record<string, any>) => {
-
     if (!currentConversation) return;
 
     // disable input while streaming
@@ -150,15 +143,18 @@ const ChatPage = () => {
     });
 
     await handleApiResponse(JSON.stringify(formData, null, 2), true);
+  };
 
+  const handleRetry = async (messageId: string) => {
+    // TODO: Implement retry functionality
   };
 
   if (!currentConversation) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <h2 className="text-lg font-medium mb-2">No conversation selected</h2>
-          <p className="text-muted-foreground">Create a new conversation to get started.</p>
+          <h2 className="text-xl font-semibold mb-2">No Conversation Selected</h2>
+          <p className="text-muted-foreground">Start a new conversation to begin chatting.</p>
         </div>
       </div>
     );
@@ -170,11 +166,11 @@ const ChatPage = () => {
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-2 flex-shrink-0 sticky top-0 z-20 flex h-16">
         <SidebarTrigger className="mr-2 cursor-pointer" />
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
-            {currentConversation.name}
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white truncate capitalize">
+            {agentName} Chat
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Create a share configuration by conversation
+            Chatting with {agentName} agent
           </p>
         </div>
       </div>
@@ -185,8 +181,8 @@ const ChatPage = () => {
           {messages.length === 0 && (
             <div className="text-center py-12">
               <div className="text-gray-500 dark:text-gray-400 mb-4">
-                <h2 className="text-lg font-medium mb-2">Welcome to Share Agent</h2>
-                <p>Create a share configuration by typing your requirements below.</p>
+                <h2 className="text-lg font-medium mb-2 capitalize">Welcome to {agentName}</h2>
+                <p>Start a conversation by typing your message below.</p>
               </div>
             </div>
           )}
@@ -226,7 +222,7 @@ const ChatPage = () => {
                 <Input
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder={isStreaming ? "AI is responding..." : "Type your message..."}
+                  placeholder={isStreaming ? "AI is responding..." : `Message ${agentName}...`}
                   disabled={isStreaming}
                   className="flex-1"
                 />

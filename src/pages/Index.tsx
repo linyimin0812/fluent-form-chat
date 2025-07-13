@@ -1,7 +1,7 @@
 
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import ChatPage from '@/components/ChatPage';
+import ChatPage from './ChatPage';
 
 const validAgents = ['assistant', 'coder', 'writer', 'analyst'];
 
