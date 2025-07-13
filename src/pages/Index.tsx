@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ChatPage from './ChatPage';
 
-const validAgents = ['assistant', 'coder', 'writer', 'analyst'];
+const validAgents = ['share-agent'];
 
 const Index = () => {
   const { '*': path } = useParams();
