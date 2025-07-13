@@ -77,8 +77,7 @@ export const ConversationSidebar = () => {
       <SidebarHeader className="p-4 border-b h-16">
         <Button 
           onClick={handleCreateConversation}
-          className="w-full justify-center gap-2 bg-primary hover:bg-primary/90"
-          size="sm"
+          className="w-full justify-center gap-2 bg-primary hover:bg-primary/90 h-9"
         >
           <Plus className="h-4 w-4" />
           New Chat
