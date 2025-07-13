@@ -11,24 +11,9 @@ interface Agent {
 
 const agents: Agent[] = [
   {
-    id: "assistant",
-    name: "General Assistant",
-    description: "A helpful AI assistant for general questions and tasks. Can help with writing, analysis, and problem-solving."
-  },
-  {
-    id: "coder",
-    name: "Code Helper",
-    description: "Specialized in programming and software development. Expert in multiple languages and frameworks."
-  },
-  {
-    id: "writer",
-    name: "Creative Writer",
-    description: "Focused on creative writing, storytelling, and content creation. Perfect for articles, stories, and marketing copy."
-  },
-  {
-    id: "analyst",
-    name: "Data Analyst",
-    description: "Specialized in data analysis, statistics, and business intelligence. Great for insights and reporting."
+    id: "share-agent",
+    name: "Share Agent",
+    description: "Create a share configuration by conversation"
   }
 ];
 
