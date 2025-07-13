@@ -9,6 +9,7 @@ import { ConversationProvider } from "@/contexts/ConversationContext";
 import { ConversationSidebar } from "@/components/ConversationSidebar";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Agents from "./pages/Agents";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
               <ConversationSidebar />
               <SidebarInset className="flex-1">
                 <Routes>
+                  <Route path="/agents" element={<Agents />} />
                   <Route path="*" element={<Index />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   {/* <Route path="*" element={<NotFound />} /> */}
