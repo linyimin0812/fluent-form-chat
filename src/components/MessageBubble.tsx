@@ -16,9 +16,11 @@ import json from 'highlight.js/lib/languages/json';
 interface MessageBubbleProps {
   message: ChatMessage;
   onRetry?: () => void;
+  onConfirmExecution?: (toolCallId: string) => void;
+  onCancelExecution?: (toolCallId: string) => void;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onRetry }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onRetry, onConfirmExecution, onCancelExecution }) => {
   const isUser = message.role === 'user';
   const [copied, setCopied] = useState(false);
   
@@ -115,7 +117,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onRetry }) => {
         {/* Tool Calls Display - Only for AI messages */}
         {!isUser && message.toolCalls && message.toolCalls.length > 0 && (
           <div className="pl-[42px] mt-3">
-            <ToolCallDisplay toolCalls={message.toolCalls} />
+            <ToolCallDisplay 
+              toolCalls={message.toolCalls} 
+              onConfirmExecution={onConfirmExecution}
+              onCancelExecution={onCancelExecution}
+            />
           </div>
         )}
         

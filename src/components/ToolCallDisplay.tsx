@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Settings, CheckCircle, XCircle, Loader } from 'lucide-react';
+import { ChevronDown, ChevronRight, Settings, CheckCircle, XCircle, Loader, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
@@ -7,9 +7,11 @@ import { ToolCall } from '@/types/chat';
 
 interface ToolCallDisplayProps {
   toolCalls: ToolCall[];
+  onConfirmExecution?: (toolCallId: string) => void;
+  onCancelExecution?: (toolCallId: string) => void;
 }
 
-const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCalls }) => {
+const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCalls, onConfirmExecution, onCancelExecution }) => {
   const [expandedCalls, setExpandedCalls] = useState<Set<string>>(new Set());
 
   const toggleExpanded = (toolCallId: string) => {
@@ -32,6 +34,8 @@ const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCalls }) => {
         return <XCircle className="h-3 w-3 text-red-500" />;
       case 'pending':
         return <Loader className="h-3 w-3 text-blue-500 animate-spin" />;
+      case 'awaiting_confirmation':
+        return <AlertTriangle className="h-3 w-3 text-yellow-500" />;
       default:
         return <Settings className="h-3 w-3 text-gray-500" />;
     }
@@ -45,6 +49,8 @@ const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCalls }) => {
         return <Badge variant="destructive">Error</Badge>;
       case 'pending':
         return <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Running</Badge>;
+      case 'awaiting_confirmation':
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">Needs Confirmation</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -126,6 +132,33 @@ const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCalls }) => {
                             ? toolCall.result 
                             : JSON.stringify(toolCall.result, null, 2)}
                         </pre>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Confirmation Buttons */}
+                  {toolCall.requiresConfirmation && (
+                    <div>
+                      <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                        Manual Confirmation Required
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onCancelExecution?.(toolCall.id)}
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => onConfirmExecution?.(toolCall.id)}
+                          className="flex-1"
+                        >
+                          Confirm
+                        </Button>
                       </div>
                     </div>
                   )}

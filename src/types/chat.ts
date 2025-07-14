@@ -4,8 +4,9 @@ export interface ToolCall {
   name: string;
   parameters: Record<string, any>;
   result?: any;
-  status?: 'pending' | 'success' | 'error';
+  status?: 'pending' | 'success' | 'error' | 'awaiting_confirmation';
   error?: string;
+  requiresConfirmation?: boolean;
 }
 
 export interface ChatMessage {
