@@ -4,6 +4,7 @@ import { Copy, Check, RotateCcw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { ChatMessage } from '@/types/chat';
 import StreamingText from './StreamingText';
+import ToolCallDisplay from './ToolCallDisplay';
 import { Button } from '@/components/ui/button';
 
 import remarkGfm from 'remark-gfm';
@@ -110,6 +111,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onRetry }) => {
 
           </div>
         </div>
+
+        {/* Tool Calls Display - Only for AI messages */}
+        {!isUser && message.toolCalls && message.toolCalls.length > 0 && (
+          <div className="pl-[42px] mt-3">
+            <ToolCallDisplay toolCalls={message.toolCalls} />
+          </div>
+        )}
         
         {/* Timestamp and Action Buttons - Full width container */}
         <div className={`flex justify-between items-center mt-1.5 group ${isUser ? 'pr-[42px]' : 'pl-[42px]'}`}>

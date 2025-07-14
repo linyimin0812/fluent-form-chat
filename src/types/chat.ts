@@ -1,4 +1,13 @@
 
+export interface ToolCall {
+  id: string;
+  name: string;
+  parameters: Record<string, any>;
+  result?: any;
+  status?: 'pending' | 'success' | 'error';
+  error?: string;
+}
+
 export interface ChatMessage {
   id: string;
   chatContent: string;
@@ -7,6 +16,7 @@ export interface ChatMessage {
   isStreaming?: boolean;
   formSchema?: FormSchema[];
   formTitle?: string; // Dynamic form title
+  toolCalls?: ToolCall[];
 }
 
 export interface FormSchema {
