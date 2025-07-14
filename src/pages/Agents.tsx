@@ -21,7 +21,7 @@ export default function Agents() {
   const navigate = useNavigate();
 
   const handleStartConversation = (agentName: string) => {
-    navigate(`/${agentName}`);
+    navigate(`/agents/${agentName}`);
   };
 
   return (

@@ -13,7 +13,7 @@ const Index = () => {
     if (path) {
       const agentName = path.split('/')[0];
       if (!validAgents.includes(agentName)) {
-        navigate('/', { replace: true });
+        navigate('/agents', { replace: true });
         return;
       }
     }
