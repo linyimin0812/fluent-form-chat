@@ -111,6 +111,7 @@ export class ChatApiService {
             fullMessage.id = chunkMessage.id;
             fullMessage.role = chunkMessage.role;
             fullMessage.timestamp = chunkMessage.timestamp || Date.now();
+            
           }
 
           if (chunkMessage.formSchema) {
@@ -118,6 +119,7 @@ export class ChatApiService {
           }
 
           fullChatContent = chunkMessage.chatContent || '';
+          fullMessage.toolCalls = chunkMessage.toolCalls || [];
         }
       }
 
