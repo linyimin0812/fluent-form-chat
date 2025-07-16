@@ -149,10 +149,10 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              variant="outline"
+              variant="ghost"
               role="combobox"
               className={cn(
-                "w-full justify-between",
+                "w-full justify-between p-0 h-auto font-normal",
                 selectedCount === 0 && "text-muted-foreground"
               )}
             >
