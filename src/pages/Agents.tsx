@@ -13,7 +13,22 @@ const agents: Agent[] = [
   {
     id: "share-agent",
     name: "Share Agent",
-    description: "Create a share configuration by conversation"
+    description: "分享agent"
+  },
+  {
+    id: "share-creation-agent",
+    name: "Share Creation Agent",
+    description: "分享配置创建agent"
+  },
+  {
+    id: "share-test-agent",
+    name: "Share Test Agent",
+    description: "分享配置测试agent"
+  },
+  {
+    id: "share-qa-agent",
+    name: "Share Q&A Agent",
+    description: "分享答疑agent"
   }
 ];
 
