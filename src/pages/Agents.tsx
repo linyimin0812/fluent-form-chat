@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Bot, MessageSquare } from "lucide-react";
+import { CreateAgentDialog } from "@/components/CreateAgentDialog";
 
 interface Agent {
   name: string;
@@ -39,6 +40,11 @@ export default function Agents() {
     navigate(`/agents/${agentName}`);
   };
 
+  const handleCreateAgent = (agentData: any) => {
+    console.log("Creating agent:", agentData);
+    // TODO: Implement agent creation logic
+  };
+
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <div className="mb-8">
@@ -50,6 +56,8 @@ export default function Agents() {
           Select an AI agent specialized for your specific needs
         </p>
       </div>
+
+      <CreateAgentDialog onCreateAgent={handleCreateAgent} />
 
       <div className="grid gap-6 md:grid-cols-2">
         {agents.map((agent) => (
