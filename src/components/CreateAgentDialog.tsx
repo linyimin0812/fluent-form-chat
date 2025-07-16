@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Minus, Bot } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Plus, Minus, Bot, ChevronDown, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface SubAgent {
   id: string;
@@ -131,6 +133,60 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
     setOpen(false);
   };
 
+  const ToolSelector = ({ tools, onToolToggle, idPrefix = "" }: { 
+    tools: string[], 
+    onToolToggle: (tool: string) => void,
+    idPrefix?: string 
+  }) => {
+    const selectedCount = tools.length;
+    const displayText = selectedCount === 0 
+      ? "Select tools..." 
+      : `${selectedCount} tool${selectedCount === 1 ? '' : 's'} selected`;
+
+    return (
+      <div className="space-y-2">
+        <Label>Tool Selection</Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              className={cn(
+                "w-full justify-between",
+                selectedCount === 0 && "text-muted-foreground"
+              )}
+            >
+              {displayText}
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0 z-50 bg-popover" align="start">
+            <div className="p-4 space-y-2">
+              {availableTools.map((tool) => (
+                <div key={tool} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`${idPrefix}tool-${tool}`}
+                    checked={tools.includes(tool)}
+                    onCheckedChange={() => onToolToggle(tool)}
+                  />
+                  <Label 
+                    htmlFor={`${idPrefix}tool-${tool}`} 
+                    className="text-sm font-normal cursor-pointer flex-1"
+                  >
+                    {tool.replace('_', ' ').toUpperCase()}
+                  </Label>
+                  {tools.includes(tool) && (
+                    <Check className="h-4 w-4 text-primary" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -155,7 +211,7 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-50 bg-popover">
                 <SelectItem value="single">Single Agent</SelectItem>
                 <SelectItem value="multiple">Multiple Agents</SelectItem>
               </SelectContent>
@@ -196,23 +252,11 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Tool Selection</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {availableTools.map((tool) => (
-                    <div key={tool} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`tool-${tool}`}
-                        checked={singleAgent.tools.includes(tool)}
-                        onCheckedChange={() => handleToolToggle(tool)}
-                      />
-                      <Label htmlFor={`tool-${tool}`} className="text-sm font-normal">
-                        {tool.replace('_', ' ').toUpperCase()}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <ToolSelector 
+                tools={singleAgent.tools}
+                onToolToggle={(tool) => handleToolToggle(tool)}
+                idPrefix="single-"
+              />
             </div>
           ) : (
             /* Multiple Agents Form */
@@ -301,23 +345,11 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <Label>Tool Selection</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {availableTools.map((tool) => (
-                            <div key={tool} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`tool-${tool}-${subAgent.id}`}
-                                checked={subAgent.tools.includes(tool)}
-                                onCheckedChange={() => handleToolToggle(tool, subAgent.id)}
-                              />
-                              <Label htmlFor={`tool-${tool}-${subAgent.id}`} className="text-sm font-normal">
-                                {tool.replace('_', ' ').toUpperCase()}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                      <ToolSelector 
+                        tools={subAgent.tools}
+                        onToolToggle={(tool) => handleToolToggle(tool, subAgent.id)}
+                        idPrefix={`sub-${subAgent.id}-`}
+                      />
                     </CardContent>
                   </Card>
                 ))}
