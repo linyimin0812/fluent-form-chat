@@ -138,51 +138,41 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
     onToolToggle: (tool: string) => void,
     idPrefix?: string 
   }) => {
-    const selectedCount = tools.length;
-    const displayText = selectedCount === 0 
-      ? "Select tools..." 
-      : `${selectedCount} tool${selectedCount === 1 ? '' : 's'} selected`;
-
     return (
       <div className="space-y-2">
         <Label>Tool Selection</Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              role="combobox"
-              className={cn(
-                "w-full justify-between p-0 h-auto font-normal",
-                selectedCount === 0 && "text-muted-foreground"
-              )}
-            >
-              {displayText}
-              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-full p-0 z-50 bg-popover" align="start">
-            <div className="p-4 space-y-2">
-              {availableTools.map((tool) => (
-                <div key={tool} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`${idPrefix}tool-${tool}`}
-                    checked={tools.includes(tool)}
-                    onCheckedChange={() => onToolToggle(tool)}
-                  />
-                  <Label 
-                    htmlFor={`${idPrefix}tool-${tool}`} 
-                    className="text-sm font-normal cursor-pointer flex-1"
-                  >
-                    {tool.replace('_', ' ').toUpperCase()}
-                  </Label>
-                  {tools.includes(tool) && (
-                    <Check className="h-4 w-4 text-primary" />
-                  )}
-                </div>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
+        <Select onValueChange={onToolToggle}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a tool" />
+          </SelectTrigger>
+          <SelectContent className="z-50 bg-popover">
+            {availableTools.map((tool) => (
+              <SelectItem key={tool} value={tool}>
+                {tool.replace('_', ' ').toUpperCase()}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {tools.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {tools.map((tool) => (
+              <div
+                key={tool}
+                className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm"
+              >
+                {tool.replace('_', ' ').toUpperCase()}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 w-4 p-0"
+                  onClick={() => onToolToggle(tool)}
+                >
+                  ×
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
