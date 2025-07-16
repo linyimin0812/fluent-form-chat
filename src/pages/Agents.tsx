@@ -1,8 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Bot, MessageSquare } from "lucide-react";
+import { Bot, MessageSquare, Eye, Edit } from "lucide-react";
 import { CreateAgentDialog } from "@/components/CreateAgentDialog";
+import { ViewEditAgentDialog } from "@/components/ViewEditAgentDialog";
+import { useState } from "react";
 
 interface Agent {
   name: string;
@@ -35,6 +37,9 @@ const agents: Agent[] = [
 
 export default function Agents() {
   const navigate = useNavigate();
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [dialogMode, setDialogMode] = useState<"view" | "edit">("view");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleStartConversation = (agentName: string) => {
     navigate(`/agents/${agentName}`);
@@ -43,6 +48,28 @@ export default function Agents() {
   const handleCreateAgent = (agentData: any) => {
     console.log("Creating agent:", agentData);
     // TODO: Implement agent creation logic
+  };
+
+  const handleViewDetails = (agent: Agent) => {
+    setSelectedAgent(agent);
+    setDialogMode("view");
+    setIsDialogOpen(true);
+  };
+
+  const handleEditAgent = (agent: Agent) => {
+    setSelectedAgent(agent);
+    setDialogMode("edit");
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedAgent(null);
+  };
+
+  const handleSaveAgent = (updatedAgent: Agent) => {
+    console.log("Saving agent:", updatedAgent);
+    // TODO: Implement agent update logic
   };
 
   return (
@@ -69,7 +96,7 @@ export default function Agents() {
               </CardTitle>
               <CardDescription>{agent.description}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
               <Button 
                 onClick={() => handleStartConversation(agent.id)}
                 className="w-full"
@@ -77,10 +104,36 @@ export default function Agents() {
                 <MessageSquare className="mr-2 h-4 w-4" />
                 Start Conversation
               </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleViewDetails(agent)}
+                  className="flex-1"
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Details
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleEditAgent(agent)}
+                  className="flex-1"
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <ViewEditAgentDialog
+        agent={selectedAgent}
+        isOpen={isDialogOpen}
+        onClose={handleCloseDialog}
+        mode={dialogMode}
+        onSave={handleSaveAgent}
+      />
     </div>
   );
 }
