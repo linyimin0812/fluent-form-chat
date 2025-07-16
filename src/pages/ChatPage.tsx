@@ -13,8 +13,6 @@ import { ChatMessage } from '@/types/chat';
 import { v4 as uuidv4 } from 'uuid';
 
 const ChatPage = () => {
-  const { '*': path } = useParams();
-  const agentName = path?.split('/')[0] || 'assistant';
   
   const { 
     currentConversation, 
@@ -27,6 +25,8 @@ const ChatPage = () => {
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
   const [submittedDynamicFormData, setSubmittedDynamicFormData] = useState<Record<string, Record<string, any>> | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const agentName = window.location.pathname?.split('/')[2] || 'share-agent';
 
   // Initialize first conversation if none exists
   useEffect(() => {
@@ -85,6 +85,8 @@ const ChatPage = () => {
 
     try {
       // Use streaming for real-time response
+      
+      const agentName = window.location.pathname?.split('/')[2] || 'share-agent';
       const response = await chatApiService.stream(agentName, currentConversation.id, chatApiMessage, (chunk: ChatMessage) => {
         setIsWaitingForResponse(false); // Hide loading indicator once streaming starts
         updateMessages([...updatedMessages, {...chunk}]);
