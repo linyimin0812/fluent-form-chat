@@ -1,22 +1,25 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Minus, Bot, ChevronDown, Check } from "lucide-react";
+import { Plus, Minus, Bot } from "lucide-react";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+
+interface Tool {
+  name: string;
+  requiresHumanIntervention: boolean;
+}
 
 interface SubAgent {
   id: string;
   name: string;
   description: string;
   prompt: string;
-  tools: string[];
+  tools: Tool[];
 }
 
 interface CreateAgentDialogProps {
@@ -24,12 +27,12 @@ interface CreateAgentDialogProps {
 }
 
 const availableTools = [
-  "web_search",
-  "file_operations", 
-  "code_execution",
-  "image_generation",
-  "data_analysis"
-];
+  { name: "web_search", requiresHumanIntervention: false, desc: "互联网检索，获取最新公开信息" },
+  { name: "file_operations", requiresHumanIntervention: false, desc: "文件读写、管理本地或云端文件" },
+  { name: "code_execution", requiresHumanIntervention: false, desc: "代码运行，支持多语言脚本执行" },
+  { name: "image_generation", requiresHumanIntervention: false, desc: "AI图片生成，根据描述生成图片" },
+  { name: "data_analysis", requiresHumanIntervention: false, desc: "数据分析与可视化，支持表格/图表" }
+] as Array<Tool & { desc: string }>;
 
 export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
   const [open, setOpen] = useState(false);
@@ -40,7 +43,7 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
     name: "",
     description: "",
     prompt: "",
-    tools: [] as string[]
+    tools: [] as Tool[]
   });
 
   // Multiple agents state
@@ -52,34 +55,65 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
       name: "",
       description: "",
       prompt: "",
-      tools: [] as string[]
+      tools: [] as Tool[]
     }] as SubAgent[]
   });
 
-  const handleToolToggle = (tool: string, agentId?: string) => {
+  // 工具添加/切换 requiresHumanIntervention
+  const handleToolToggle = (toolName: string, requiresIntervention: boolean, agentId?: string) => {
+    if (agentType === "single") {
+      setSingleAgent(prev => {
+        const exists = prev.tools.find(t => t.name === toolName);
+        if (exists) {
+          // 切换 requiresHumanIntervention
+          return {
+            ...prev,
+            tools: prev.tools.map(t =>
+              t.name === toolName ? { ...t, requiresHumanIntervention: requiresIntervention } : t
+            )
+          };
+        } else {
+          return {
+            ...prev,
+            tools: [...prev.tools, { name: toolName, requiresHumanIntervention: requiresIntervention }]
+          };
+        }
+      });
+    } else if (agentId) {
+      setMultipleAgents(prev => ({
+        ...prev,
+        subAgents: prev.subAgents.map(agent =>
+          agent.id === agentId
+            ? {
+                ...agent,
+                tools: agent.tools.find(t => t.name === toolName)
+                  ? agent.tools.map(t =>
+                      t.name === toolName ? { ...t, requiresHumanIntervention: requiresIntervention } : t
+                    )
+                  : [...agent.tools, { name: toolName, requiresHumanIntervention: requiresIntervention }]
+              }
+            : agent
+        )
+      }));
+    }
+  };
+
+  // 工具移除
+  const handleToolRemove = (toolName: string, agentId?: string) => {
     if (agentType === "single") {
       setSingleAgent(prev => ({
         ...prev,
-        tools: prev.tools.includes(tool) 
-          ? prev.tools.filter(t => t !== tool)
-          : [...prev.tools, tool]
+        tools: prev.tools.filter(t => t.name !== toolName)
       }));
-    } else {
-      if (agentId) {
-        setMultipleAgents(prev => ({
-          ...prev,
-          subAgents: prev.subAgents.map(agent => 
-            agent.id === agentId
-              ? {
-                  ...agent,
-                  tools: agent.tools.includes(tool)
-                    ? agent.tools.filter(t => t !== tool)
-                    : [...agent.tools, tool]
-                }
-              : agent
-          )
-        }));
-      }
+    } else if (agentId) {
+      setMultipleAgents(prev => ({
+        ...prev,
+        subAgents: prev.subAgents.map(agent =>
+          agent.id === agentId
+            ? { ...agent, tools: agent.tools.filter(t => t.name !== toolName) }
+            : agent
+        )
+      }));
     }
   };
 
@@ -133,44 +167,123 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
     setOpen(false);
   };
 
-  const ToolSelector = ({ tools, onToolToggle, idPrefix = "" }: { 
-    tools: string[], 
-    onToolToggle: (tool: string) => void,
-    idPrefix?: string 
+  // ToolSelector 组件，支持 Tool 类型
+  const ToolSelector = ({ tools, onToolToggle, onToolRemove }: {
+    tools: Tool[],
+    onToolToggle: (toolName: string, requiresIntervention: boolean) => void,
+    onToolRemove: (toolName: string) => void,
   }) => {
+    const [search, setSearch] = useState("");
+    const filteredTools = availableTools.filter(
+      t => !tools.some(sel => sel.name === t.name) && t.name.includes(search)
+    );
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [dropdownUp, setDropdownUp] = useState(false);
+    const [dropdownMaxHeight, setDropdownMaxHeight] = useState<number|undefined>(undefined);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // 监听下拉显示时自动判断方向和最大高度
+    const handleShowDropdown = () => {
+      setShowDropdown(true);
+      setTimeout(() => {
+        if (!inputRef.current) return;
+        const rect = inputRef.current.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        const spaceAbove = rect.top;
+        const spaceBelow = windowHeight - rect.bottom;
+        // 计算下拉最大高度，确保不产生滚动
+        if (spaceBelow >= spaceAbove) {
+          setDropdownUp(false);
+          setDropdownMaxHeight(spaceBelow - 8); // 8px margin
+        } else {
+          setDropdownUp(true);
+          setDropdownMaxHeight(spaceAbove - 8);
+        }
+      }, 0);
+    };
+
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 relative">
         <Label>Tool Selection</Label>
-        <Select onValueChange={onToolToggle}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a tool" />
-          </SelectTrigger>
-          <SelectContent className="z-50 bg-popover">
-            {availableTools.map((tool) => (
-              <SelectItem key={tool} value={tool}>
-                {tool.replace('_', ' ').toUpperCase()}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="relative">
+          <Input
+            ref={inputRef}
+            placeholder="搜索或选择工具..."
+            value={search}
+            onFocus={handleShowDropdown}
+            onChange={e => {
+              setSearch(e.target.value);
+              setShowDropdown(true);
+            }}
+            onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+            className="pr-8"
+          />
+          {showDropdown && (
+            <div
+              className="absolute left-0 right-0 z-10 bg-popover border rounded shadow overflow-hidden"
+              style={{
+                ...(dropdownUp ? { bottom: '100%', marginBottom: 4 } : { top: '100%', marginTop: 4 }),
+                maxHeight: dropdownMaxHeight,
+                overflowY: 'visible',
+              }}
+            >
+              {filteredTools.length === 0 ? (
+                <div className="text-xs text-muted-foreground px-2 py-4">无匹配工具</div>
+              ) : (
+                filteredTools.map(tool => (
+                  <button
+                    key={tool.name}
+                    type="button"
+                    className="w-full text-left px-3 py-2 hover:bg-accent hover:text-accent-foreground text-sm rounded-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-accent"
+                    onMouseDown={e => {
+                      e.preventDefault();
+                      onToolToggle(tool.name, false);
+                      setSearch("");
+                      setShowDropdown(false);
+                    }}
+                  >
+                    <div className="flex flex-col items-start">
+                      <span>{tool.name.replace('_', ' ').toUpperCase()}</span>
+                      <span className="text-xs text-muted-foreground mt-0.5">{tool.desc}</span>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
         {tools.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {tools.map((tool) => (
-              <div
-                key={tool}
-                className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm"
-              >
-                {tool.replace('_', ' ').toUpperCase()}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0"
-                  onClick={() => onToolToggle(tool)}
+          <div className="space-y-2 mt-2 flex flex-col">
+            {tools.map((tool) => {
+              const meta = availableTools.find(t => t.name === tool.name);
+              return (
+                <div
+                  key={tool.name}
+                  className="flex items-center justify-between bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm"
                 >
-                  ×
-                </Button>
-              </div>
-            ))}
+                  <div className="flex flex-col items-start">
+                    <span>{tool.name.replace('_', ' ').toUpperCase()}</span>
+                    {meta?.desc && <span className="text-xs text-muted-foreground mt-0.5">{meta.desc}</span>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs" htmlFor={`chk-${tool.name}`}>是否需要人工介入</Label>
+                    <Checkbox
+                      id={`chk-${tool.name}`}
+                      checked={tool.requiresHumanIntervention}
+                      onCheckedChange={checked => onToolToggle(tool.name, !!checked)}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0"
+                      onClick={() => onToolRemove(tool.name)}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -185,7 +298,7 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
           Create New Agent
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl h-[600px] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Bot className="h-5 w-5" />
@@ -193,15 +306,15 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 flex-1 flex flex-col overflow-y-auto">
           {/* Agent Type Selector */}
           <div className="space-y-2">
             <Label>Agent Type</Label>
-            <Select value={agentType} onValueChange={(value: "single" | "multiple") => setAgentType(value)}>
-              <SelectTrigger>
+            <Select value={agentType} onValueChange={v => setAgentType(v as "single" | "multiple") }>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="z-50 bg-popover">
+              <SelectContent position="popper">
                 <SelectItem value="single">Single Agent</SelectItem>
                 <SelectItem value="multiple">Multiple Agents</SelectItem>
               </SelectContent>
@@ -218,6 +331,7 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
                   value={singleAgent.name}
                   onChange={(e) => setSingleAgent(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Enter agent name"
+                  className="focus:border-muted focus:ring-1 focus:ring-muted"
                 />
               </div>
 
@@ -228,6 +342,7 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
                   value={singleAgent.description}
                   onChange={(e) => setSingleAgent(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Enter agent description"
+                  className="focus:border-muted focus:ring-1 focus:ring-muted"
                 />
               </div>
 
@@ -239,13 +354,14 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
                   onChange={(e) => setSingleAgent(prev => ({ ...prev, prompt: e.target.value }))}
                   placeholder="Enter agent prompt"
                   rows={4}
+                  className="focus:border-muted focus:ring-1 focus:ring-muted"
                 />
               </div>
 
               <ToolSelector 
                 tools={singleAgent.tools}
-                onToolToggle={(tool) => handleToolToggle(tool)}
-                idPrefix="single-"
+                onToolToggle={(toolName, requiresIntervention) => handleToolToggle(toolName, requiresIntervention)}
+                onToolRemove={(toolName) => handleToolRemove(toolName)}
               />
             </div>
           ) : (
@@ -313,6 +429,7 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
                           value={subAgent.name}
                           onChange={(e) => updateSubAgent(subAgent.id, "name", e.target.value)}
                           placeholder="Enter sub agent name"
+                          className="focus:border-muted focus:ring-1 focus:ring-muted"
                         />
                       </div>
 
@@ -322,6 +439,7 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
                           value={subAgent.description}
                           onChange={(e) => updateSubAgent(subAgent.id, "description", e.target.value)}
                           placeholder="Enter sub agent description"
+                          className="focus:border-muted focus:ring-1 focus:ring-muted"
                         />
                       </div>
 
@@ -332,13 +450,14 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
                           onChange={(e) => updateSubAgent(subAgent.id, "prompt", e.target.value)}
                           placeholder="Enter sub agent prompt"
                           rows={3}
+                          className="focus:border-muted focus:ring-1 focus:ring-muted"
                         />
                       </div>
 
                       <ToolSelector 
                         tools={subAgent.tools}
-                        onToolToggle={(tool) => handleToolToggle(tool, subAgent.id)}
-                        idPrefix={`sub-${subAgent.id}-`}
+                        onToolToggle={(toolName, requiresIntervention) => handleToolToggle(toolName, requiresIntervention, subAgent.id)}
+                        onToolRemove={(toolName) => handleToolRemove(toolName, subAgent.id)}
                       />
                     </CardContent>
                   </Card>
