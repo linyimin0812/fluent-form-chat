@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Settings, CheckCircle, XCircle, Loader, AlertTriangle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Settings, CheckCircle, XCircle, Loader, AlertTriangle, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
@@ -82,6 +82,34 @@ const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCalls, onConfirmE
                     <span className="font-medium text-sm truncate">{toolCall.name}</span>
                     {getStatusBadge(toolCall.status)}
                   </div>
+                  <div className="flex items-center gap-1 mx-2">
+                    {toolCall.requiresConfirmation && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onCancelExecution?.(toolCall.id);
+                          }}
+                          className="h-6 px-2 text-xs hover:text-red-600 dark:hover:text-red-400"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onConfirmExecution?.(toolCall.id);
+                          }}
+                          className="h-6 px-2 text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
+                        >
+                          <Check className="h-3 w-3" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
                   {isExpanded ? (
                     <ChevronDown className="h-4 w-4 text-gray-500 flex-shrink-0" />
                   ) : (
@@ -132,33 +160,6 @@ const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCalls, onConfirmE
                             ? toolCall.result 
                             : JSON.stringify(toolCall.result, null, 2)}
                         </pre>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Confirmation Buttons */}
-                  {toolCall.requiresConfirmation && (
-                    <div>
-                      <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                        Manual Confirmation Required
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onCancelExecution?.(toolCall.id)}
-                          className="flex-1"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => onConfirmExecution?.(toolCall.id)}
-                          className="flex-1"
-                        >
-                          Confirm
-                        </Button>
                       </div>
                     </div>
                   )}
