@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Minus, Bot } from "lucide-react";
+import { Plus, Minus, Bot, X } from "lucide-react";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -173,119 +173,70 @@ export function CreateAgentDialog({ onCreateAgent }: CreateAgentDialogProps) {
     onToolToggle: (toolName: string, requiresIntervention: boolean) => void,
     onToolRemove: (toolName: string) => void,
   }) => {
-    const [search, setSearch] = useState("");
-    const filteredTools = availableTools.filter(
-      t => !tools.some(sel => sel.name === t.name) && t.name.includes(search)
-    );
-    const [showDropdown, setShowDropdown] = useState(false);
-    const [dropdownUp, setDropdownUp] = useState(false);
-    const [dropdownMaxHeight, setDropdownMaxHeight] = useState<number|undefined>(undefined);
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    // 监听下拉显示时自动判断方向和最大高度
-    const handleShowDropdown = () => {
-      setShowDropdown(true);
-      setTimeout(() => {
-        if (!inputRef.current) return;
-        const rect = inputRef.current.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        const spaceAbove = rect.top;
-        const spaceBelow = windowHeight - rect.bottom;
-        // 计算下拉最大高度，确保不产生滚动
-        if (spaceBelow >= spaceAbove) {
-          setDropdownUp(false);
-          setDropdownMaxHeight(spaceBelow - 8); // 8px margin
-        } else {
-          setDropdownUp(true);
-          setDropdownMaxHeight(spaceAbove - 8);
-        }
-      }, 0);
-    };
-
     return (
-      <div className="space-y-2 relative">
-        <Label>Tool Selection</Label>
-        <div className="relative">
-          <Input
-            ref={inputRef}
-            placeholder="搜索或选择工具..."
-            value={search}
-            onFocus={handleShowDropdown}
-            onChange={e => {
-              setSearch(e.target.value);
-              setShowDropdown(true);
-            }}
-            onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-            className="pr-8"
-          />
-          {showDropdown && (
-            <div
-              className="absolute left-0 right-0 z-10 bg-popover border rounded shadow overflow-hidden"
-              style={{
-                ...(dropdownUp ? { bottom: '100%', marginBottom: 4 } : { top: '100%', marginTop: 4 }),
-                maxHeight: dropdownMaxHeight,
-                overflowY: 'visible',
-              }}
-            >
-              {filteredTools.length === 0 ? (
-                <div className="text-xs text-muted-foreground px-2 py-4">无匹配工具</div>
-              ) : (
-                filteredTools.map(tool => (
-                  <button
-                    key={tool.name}
-                    type="button"
-                    className="w-full text-left px-3 py-2 hover:bg-accent hover:text-accent-foreground text-sm rounded-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-accent"
-                    onMouseDown={e => {
-                      e.preventDefault();
-                      onToolToggle(tool.name, false);
-                      setSearch("");
-                      setShowDropdown(false);
-                    }}
-                  >
-                    <div className="flex flex-col items-start">
-                      <span>{tool.name.replace('_', ' ').toUpperCase()}</span>
-                      <span className="text-xs text-muted-foreground mt-0.5">{tool.desc}</span>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-        </div>
-        {tools.length > 0 && (
-          <div className="space-y-2 mt-2 flex flex-col">
-            {tools.map((tool) => {
-              const meta = availableTools.find(t => t.name === tool.name);
-              return (
-                <div
-                  key={tool.name}
-                  className="flex items-center justify-between bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm"
-                >
-                  <div className="flex flex-col items-start">
-                    <span>{tool.name.replace('_', ' ').toUpperCase()}</span>
-                    {meta?.desc && <span className="text-xs text-muted-foreground mt-0.5">{meta.desc}</span>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs" htmlFor={`chk-${tool.name}`}>是否需要人工介入</Label>
-                    <Checkbox
-                      id={`chk-${tool.name}`}
-                      checked={tool.requiresHumanIntervention}
-                      onCheckedChange={checked => onToolToggle(tool.name, !!checked)}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0"
-                      onClick={() => onToolRemove(tool.name)}
-                    >
-                      ×
-                    </Button>
-                  </div>
+      <div className="space-y-4">
+        <Select
+          value=""
+          onValueChange={(value) => {
+            if (!tools.some(t => t.name === value)) {
+              onToolToggle(value, false);
+            }
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="选择工具..." />
+          </SelectTrigger>
+          <SelectContent>
+            {availableTools.map(tool => (
+              <SelectItem
+                key={tool.name}
+                value={tool.name}
+                disabled={tools.some(t => t.name === tool.name)}
+              >
+                <div className="flex flex-col">
+                  <span>{tool.name.replace('_', ' ').toUpperCase()}</span>
+                  <span className="text-xs text-muted-foreground">{tool.desc}</span>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="space-y-2">
+          {tools.map(tool => {
+            const meta = availableTools.find(t => t.name === tool.name);
+            return (
+              <div
+                key={tool.name}
+                className="flex items-center justify-between bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm group"
+              >
+                <div className="flex flex-col items-start">
+                  <span>{tool.name.replace('_', ' ').toUpperCase()}</span>
+                  {meta?.desc && <span className="text-xs text-muted-foreground mt-0.5">{meta.desc}</span>}
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs">人工介入</span>
+                    <Checkbox
+                      checked={tool.requiresHumanIntervention}
+                      onCheckedChange={(checked) => {
+                        onToolToggle(tool.name, checked as boolean);
+                      }}
+                    />
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => onToolRemove(tool.name)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   };
