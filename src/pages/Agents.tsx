@@ -9,12 +9,13 @@ const availableTools = [
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Bot, MessageSquare, Eye, Edit } from "lucide-react";
+import { Bot, MessageSquare, Eye, Edit, X } from "lucide-react";
 import { CreateAgentDialog } from "@/components/CreateAgentDialog";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 
 interface Tool {
@@ -185,9 +186,9 @@ export default function Agents() {
                     <Input
                       id="agent-type"
                       value={selectedAgent.agentType === 'multiple' ? 'Multiple Agents' : 'Single Agent'}
-                      disabled
-                      tabIndex={-1}
-                      className="select-none focus:border-muted focus:ring-1 focus:ring-muted bg-muted/50 cursor-default"
+                      disabled={dialogMode === 'view'}
+                      tabIndex={dialogMode === 'view' ? -1 : undefined}
+                      className={dialogMode === 'view' ? "select-none focus:outline-none focus:ring-0 bg-muted/50 cursor-default border-y-0 rounded-none" : ""}
                     />
                   </div>
                   <div className="space-y-2">
@@ -195,9 +196,9 @@ export default function Agents() {
                     <Input
                       id="agent-name"
                       value={selectedAgent.name}
-                      disabled
-                      tabIndex={-1}
-                      className="select-none focus:border-muted focus:ring-1 focus:ring-muted bg-muted/50 cursor-default"
+                      disabled={dialogMode === 'view'}
+                      tabIndex={dialogMode === 'view' ? -1 : undefined}
+                      className={dialogMode === 'view' ? "select-none focus:outline-none focus:ring-0 bg-muted/50 cursor-default border-y-0 rounded-none" : ""}
                     />
                   </div>
                   <div className="space-y-2">
@@ -205,64 +206,158 @@ export default function Agents() {
                     <Textarea
                       id="agent-description"
                       value={selectedAgent.description}
-                      disabled
-                      tabIndex={-1}
-                      className="select-none focus:border-muted focus:ring-1 focus:ring-muted bg-muted/50 cursor-default"
+                      disabled={dialogMode === 'view'}
+                      tabIndex={dialogMode === 'view' ? -1 : undefined}
+                      className={dialogMode === 'view' ? "select-none focus:outline-none focus:ring-0 bg-muted/50 cursor-default border-y-0 rounded-none" : ""}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Agent 编排图</Label>
-                    <div className="w-full h-48 bg-muted/50 rounded flex items-center justify-center border border-dashed border-muted-foreground/40 select-none overflow-hidden">
-                      <img
-                        src="https://lark-assets-prod-aliyun.oss-cn-hangzhou.aliyuncs.com/lark/0/2025/svg/264251/1752576809686-25e01f4b-4054-4da8-ac9c-76281dfa55bb.svg?OSSAccessKeyId=LTAI4GGhPJmQ4HWCmhDAn4F5&Expires=1752843746&Signature=vd%2FeRBm8EgnLOFdqdmv%2Bz08GalE%3D&response-content-disposition=inline"
-                        alt="Agent 编排图"
-                        className="max-h-44 object-contain"
-                        draggable={false}
-                      />
+                  {dialogMode === 'view' && (
+                    <div className="space-y-2">
+                      <Label>Agent 编排图</Label>
+                      <div className="w-full h-48 bg-muted/50 rounded flex items-center justify-center border border-dashed border-muted-foreground/40 select-none overflow-hidden">
+                        <img
+                          src="https://lark-assets-prod-aliyun.oss-cn-hangzhou.aliyuncs.com/lark/0/2025/svg/264251/1752576809686-25e01f4b-4054-4da8-ac9c-76281dfa55bb.svg?OSSAccessKeyId=LTAI4GGhPJmQ4HWCmhDAn4F5&Expires=1752843746&Signature=vd%2FeRBm8EgnLOFdqdmv%2Bz08GalE%3D&response-content-disposition=inline"
+                          alt="Agent 编排图"
+                          className="max-h-44 object-contain"
+                          draggable={false}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="agent-prompt">Prompt</Label>
                     <Textarea
                       id="agent-prompt"
                       value={selectedAgent.prompt || ''}
-                      disabled
-                      tabIndex={-1}
-                      className="select-none focus:border-muted focus:ring-1 focus:ring-muted bg-muted/50 cursor-default"
+                      disabled={dialogMode === 'view'}
+                      tabIndex={dialogMode === 'view' ? -1 : undefined}
+                      className={dialogMode === 'view' ? "select-none focus:outline-none focus:ring-0 bg-muted/50 cursor-default border-y-0 rounded-none" : ""}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Selected Tools</Label>
                     <div className="space-y-2">
-                      {(selectedAgent.tools && selectedAgent.tools.length > 0) ? (
-                        selectedAgent.tools.map(tool => {
-                          const meta = availableTools.find(t => t.name === tool.name);
-                          return (
-                            <div
-                              key={tool.name}
-                              className="flex items-center justify-between bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm select-none"
-                            >
-                              <div className="flex flex-col items-start">
-                                <span>{tool.name.replace('_', ' ').toUpperCase()}</span>
-                                {meta?.desc && <span className="text-xs text-muted-foreground mt-0.5">{meta.desc}</span>}
+                      {dialogMode === 'view' ? (
+                        // View mode display
+                        (selectedAgent.tools && selectedAgent.tools.length > 0) ? (
+                          selectedAgent.tools.map(tool => {
+                            const meta = availableTools.find(t => t.name === tool.name);
+                            return (
+                              <div
+                                key={tool.name}
+                                className="flex items-center justify-between bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm select-none"
+                              >
+                                <div className="flex flex-col items-start">
+                                  <span>{tool.name.replace('_', ' ').toUpperCase()}</span>
+                                  {meta?.desc && <span className="text-xs text-muted-foreground mt-0.5">{meta.desc}</span>}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs">人工介入</span>
+                                  <input type="checkbox" checked={tool.requiresHumanIntervention} disabled tabIndex={-1} className="accent-muted/50" />
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs">人工介入</span>
-                                <input type="checkbox" checked={tool.requiresHumanIntervention} disabled tabIndex={-1} className="accent-muted/50" />
-                              </div>
-                            </div>
-                          );
-                        })
+                            );
+                          })
+                        ) : (
+                          <span className="text-xs text-muted-foreground">无工具</span>
+                        )
                       ) : (
-                        <span className="text-xs text-muted-foreground">无工具</span>
+                        // Edit mode display
+                        <div className="space-y-4">
+                          <Select
+                            value=""
+                            onValueChange={(value) => {
+                              if (!selectedAgent.tools?.some(t => t.name === value)) {
+                                const newTool = { name: value, requiresHumanIntervention: false };
+                                setSelectedAgent(prev => prev ? {
+                                  ...prev,
+                                  tools: [...(prev.tools || []), newTool]
+                                } : null);
+                              }
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="选择工具..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableTools.map(tool => (
+                                <SelectItem 
+                                  key={tool.name} 
+                                  value={tool.name}
+                                  disabled={selectedAgent.tools?.some(t => t.name === tool.name)}
+                                >
+                                  <div className="flex flex-col">
+                                    <span>{tool.name.replace('_', ' ').toUpperCase()}</span>
+                                    <span className="text-xs text-muted-foreground">{tool.desc}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          <div className="space-y-2">
+                            {selectedAgent.tools?.map(tool => {
+                              const meta = availableTools.find(t => t.name === tool.name);
+                              return (
+                                <div
+                                  key={tool.name}
+                                  className="flex items-center justify-between bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm group"
+                                >
+                                  <div className="flex flex-col items-start">
+                                    <span>{tool.name.replace('_', ' ').toUpperCase()}</span>
+                                    {meta?.desc && <span className="text-xs text-muted-foreground mt-0.5">{meta.desc}</span>}
+                                  </div>
+                                  <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs">人工介入</span>
+                                      <input 
+                                        type="checkbox" 
+                                        checked={tool.requiresHumanIntervention}
+                                        onChange={(e) => {
+                                          setSelectedAgent(prev => prev ? {
+                                            ...prev,
+                                            tools: prev.tools?.map(t => 
+                                              t.name === tool.name 
+                                                ? { ...t, requiresHumanIntervention: e.target.checked }
+                                                : t
+                                            )
+                                          } : null);
+                                        }}
+                                        className="accent-primary"
+                                      />
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      onClick={() => {
+                                        setSelectedAgent(prev => prev ? {
+                                          ...prev,
+                                          tools: prev.tools?.filter(t => t.name !== tool.name)
+                                        } : null);
+                                      }}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>
                 </div>
                 <div className="flex-1" />
                 <div className="flex justify-end space-x-2 pt-4">
+                  {dialogMode === 'edit' && (
+                    <Button onClick={() => handleSaveAgent(selectedAgent)}>
+                      Save Changes
+                    </Button>
+                  )}
                   <Button variant="outline" onClick={handleCloseDialog}>
-                    Close
+                    {dialogMode === 'view' ? 'Close' : 'Cancel'}
                   </Button>
                 </div>
               </div>
